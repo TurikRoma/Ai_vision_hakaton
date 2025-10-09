@@ -12,7 +12,7 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(sa.String(1024))
 
     analyses = relationship("Analysis", back_populates="owner")
-    refresh_tokens = relationship("RefreshToken", back_populates="user")
+    user_refresh_tokens = relationship("UserRefreshToken", back_populates="user")
 
 
 class Analysis(Base):
@@ -29,8 +29,8 @@ class Analysis(Base):
     owner = relationship("User", back_populates="analyses")
 
 
-class RefreshToken(Base):
-    __tablename__ = "refresh_tokens"
+class UserRefreshToken(Base):
+    __tablename__ = "user_refresh_tokens"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     refresh_token: Mapped[str] = mapped_column(sa.String(1024), index=True)
@@ -38,6 +38,7 @@ class RefreshToken(Base):
     created_at: Mapped[sa.DateTime] = mapped_column(
         sa.DateTime, default=sa.func.now()
     )
+    revoked: Mapped[bool] = mapped_column(sa.Boolean, default=False)
     user_id: Mapped[int] = mapped_column(sa.ForeignKey("users.id"))
 
-    user = relationship("User", back_populates="refresh_tokens")
+    user = relationship("User", back_populates="user_refresh_tokens")

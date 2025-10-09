@@ -20,22 +20,11 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 from app.db.base import Base
+from app.db import models  # noqa: F401
 from app.core.config import settings
-from pydantic import PostgresDsn
 
 target_metadata = Base.metadata
 
-
-def get_url():
-    return str(
-        PostgresDsn.build(
-            scheme="postgresql+asyncpg",
-            username=settings.POSTGRES_USER,
-            password=settings.POSTGRES_PASSWORD,
-            host=settings.POSTGRES_SERVER,
-            path=settings.POSTGRES_DB,
-        )
-    )
 
 
 # other values from the config, defined by the needs of env.py,
@@ -53,7 +42,7 @@ def run_migrations_offline() -> None:
     Calls to context.execute() here emit the given string to the
     script output.
     """
-    url = get_url()
+    url = settings.DATABASE_URL
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -78,7 +67,7 @@ async def run_async_migrations() -> None:
     """
 
     configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = get_url()
+    configuration["sqlalchemy.url"] = settings.DATABASE_URL
     connectable = async_engine_from_config(
         configuration,
         prefix="sqlalchemy.",
