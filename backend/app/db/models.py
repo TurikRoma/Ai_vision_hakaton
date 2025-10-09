@@ -1,0 +1,43 @@
+import sqlalchemy as sa
+from sqlalchemy.orm import mapped_column, Mapped, relationship
+
+from .base import Base
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(sa.String(320), unique=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(sa.String(1024))
+
+    analyses = relationship("Analysis", back_populates="owner")
+    refresh_tokens = relationship("RefreshToken", back_populates="user")
+
+
+class Analysis(Base):
+    __tablename__ = "analyses"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    image_path: Mapped[str] = mapped_column(sa.String(1024))
+    result: Mapped[dict] = mapped_column(sa.JSON, nullable=True)
+    created_at: Mapped[sa.DateTime] = mapped_column(
+        sa.DateTime, default=sa.func.now()
+    )
+    owner_id: Mapped[int] = mapped_column(sa.ForeignKey("users.id"))
+
+    owner = relationship("User", back_populates="analyses")
+
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    refresh_token: Mapped[str] = mapped_column(sa.String(1024), index=True)
+    expires_at: Mapped[sa.DateTime] = mapped_column(sa.DateTime)
+    created_at: Mapped[sa.DateTime] = mapped_column(
+        sa.DateTime, default=sa.func.now()
+    )
+    user_id: Mapped[int] = mapped_column(sa.ForeignKey("users.id"))
+
+    user = relationship("User", back_populates="refresh_tokens")
