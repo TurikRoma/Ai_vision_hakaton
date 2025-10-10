@@ -1,16 +1,58 @@
-# React + Vite
+# AIFace — UI Demo (Frontend Only)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Красивый и современный прототип интерфейса для анализа состояния здоровья по фото лица. В этом репозитории — только фронтенд, без ML и бэкенда. Все кнопки и экраны работают, анализ имитируется.
 
-Currently, two official plugins are available:
+## Быстрый старт
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. Установите зависимости:
+   ```bash
+   npm install
+   ```
+2. Запустите dev-сервер:
+   ```bash
+   npm run dev
+   ```
+3. Откройте ссылку из консоли (обычно http://localhost:5173).
 
-## React Compiler
+Подсказки:
+- Доступ к камере работает на localhost без HTTPS (браузер спросит разрешение).
+- На мобильном устройстве камера доступна, если открыть локальный адрес в той же сети и браузер поддерживает getUserMedia.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Где менять эндпоинты (TODO(API))
 
-## Expanding the ESLint configuration
+Все места, которые нужно заменить при подключении бэкенда, помечены комментарием `TODO(API)`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- `src/lib/api.js`
+  - `BASE_URL` использует `VITE_API_URL` из `.env`
+  - `analyzeImage()` — сейчас использует мок `mockAnalyze`. Замените на `POST /analyses/` (multipart/form-data).
+  - `fetchHistory()` — замените на `GET /analyses/`.
+  - `fetchAnalysisById(id)` — замените на `GET /analyses/{id}`.
+- Дополнительные подсказки есть в `src/pages/Scan.jsx` и `src/pages/Results.jsx`.
+
+Создайте файл `.env` на основе `.env.example`:
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+## Структура UI
+
+- `src/pages/Landing.jsx` — лендинг с описанием и CTA.
+- `src/pages/Scan.jsx` — камера, загрузка файла, запуск анализа.
+- `src/pages/Results.jsx` — метрики и рекомендации (визуализация прогресс-барами).
+- `src/pages/Profile.jsx` — профиль и локальная история анализов (localStorage).
+- `src/components/*` — переиспользуемые компоненты (Navbar, Footer, CameraCapture, MetricCard, ProgressBar).
+- `src/context/AppContext.jsx` — небольшой стор для изображения/результатов/истории.
+
+## Примечания по демо
+
+- Анализ генерируется случайно в `src/lib/mock.js` и сохраняется в локальную историю.
+- Кнопка «Отправить врачу» показывает уведомление и служит для демонстрации — интегрируйте реальный вызов на бэкенд в `src/lib/api.js`.
+- Для вывода рекомендаций используются простые правила на основе скора.
+
+## Стили
+
+Tailwind CSS с Vite. Основные стили подключены в `src/index.css`.
+
+## Лицензия
+
+Только для демонстрации на хакатоне.
