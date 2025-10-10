@@ -1,15 +1,15 @@
 services:
-  # postgres:
-  #   image: postgres:16-alpine
-  #   container_name: ai_vision_postgres
-  #   env_file: .env
-  #   ports:
-  #     - "5433:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   restart: unless-stopped
-  #   networks:
-  #     - ai_vision_network
+  postgres:
+    image: postgres:16-alpine
+    container_name: ai_vision_postgres
+    env_file: .env
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - ai_vision_network
 
   # redis:
   #   image: redis:7-alpine
@@ -45,6 +45,9 @@ services:
   #   env_file: .env
   #   ports:
   #     - "8000:8000"
+  #   depends_on:
+  #     - postgres
+  #     - minio
   #   restart: unless-stopped
   #   networks:
   #     - ai_vision_network

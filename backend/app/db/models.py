@@ -27,7 +27,9 @@ class Analysis(Base):
     created_at: Mapped[sa.DateTime] = mapped_column(
         sa.DateTime(timezone=True), default=sa.func.now()
     )
-    owner_id: Mapped[int] = mapped_column(sa.ForeignKey("users.id"))
+    owner_id: Mapped[int | None] = mapped_column(
+        sa.ForeignKey("users.id"), nullable=True
+    )
 
     owner = relationship("User", back_populates="analyses")
 

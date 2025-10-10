@@ -8,7 +8,7 @@ class AnalysisBase(BaseModel):
 
 class AnalysisCreate(AnalysisBase):
     image_path: str
-    owner_id: int
+    owner_id: int | None = None
 
 
 class Analysis(AnalysisBase):
@@ -16,6 +16,6 @@ class Analysis(AnalysisBase):
     image_path: str
     result: dict | None
     created_at: datetime
-    owner_id: int
+    owner_id: int | None
 
     model_config = ConfigDict(from_attributes=True)
