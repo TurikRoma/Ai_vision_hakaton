@@ -8,7 +8,7 @@ setup_logging()
 
 app = FastAPI(
     title="AI Vision Hakaton",
-    openapi_url=f"docs/openapi.json",
+    openapi_url="/docs/openapi.json",
 )
 
 # Set all CORS enabled origins

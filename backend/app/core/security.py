@@ -24,7 +24,7 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 
-def create_refresh_token(data: dict):
+def create_refresh_token(data: dict, expires_delta: timedelta | None = None):
     """Create a refresh JWT token."""
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(
@@ -38,15 +38,17 @@ def create_refresh_token(data: dict):
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against a hashed password."""
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verify a password against a hash."""
+    password_hash = sha256(plain_password.encode()).hexdigest()
+    return pwd_context.verify(password_hash, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
     """Hash a password."""
-    return pwd_context.hash(password)
+    password_hash = sha256(password.encode()).hexdigest()
+    return pwd_context.hash(password_hash)
 
 
-def get_refresh_token_hash(refresh_token: str) -> str:
+def get_refresh_token_hash(token: str) -> str:
     """Hash a refresh token using SHA256."""
-    return sha256(refresh_token.encode()).hexdigest()
+    return sha256(token.encode()).hexdigest()
