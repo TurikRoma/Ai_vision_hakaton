@@ -1,32 +1,28 @@
 import { useRef, useState } from 'react'
+import heroPrimaryUrl from '../assets/hero-primary.svg?url'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import StatsSvgSection from './StatsSvgSection'
 
 export default function HeroCodeSection() {
   const navigate = useNavigate()
   const { dispatch } = useApp()
   const fileRef = useRef(null)
 
-  // Try to auto-load images from src/assets by filename (any extension incl. svg)
-  const assets = import.meta.glob('../assets/*.{png,jpg,jpeg,webp,avif,svg}', { eager: true, as: 'url' })
-  function findAsset(basename) {
-    const entry = Object.entries(assets).find(([p]) => p.includes(`/assets/${basename}.`))
-    return entry ? entry[1] : null
-  }
-  const primaryFromAssets = findAsset('hero-primary')
-
-  // Fallback order: assets -> public path -> remote placeholder
-  const publicPrimary = '/hero-primary.svg' // you can replace with uploaded girl path
+  // Pin to exact asset to avoid glob ambiguity
+  const primaryFromAssets = heroPrimaryUrl
+  // Fallback order: assets -> public path -> remote placeholder (public path kept for manual overrides)
+  const publicPrimary = '/hero-primary.svg'
   const remoteFallback = 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=1200&auto=format&fit=crop'
 
   const [imgSrc, setImgSrc] = useState(primaryFromAssets || publicPrimary || remoteFallback)
 
   function onUploadClick() {
-    fileRef.current?.click()
+    dispatch({ type: 'SET_INTENT', payload: 'upload' })
+    navigate('/scan')
   }
 
   function onScanClick() {
+    dispatch({ type: 'SET_INTENT', payload: 'scan' })
     navigate('/scan')
   }
 
@@ -43,7 +39,6 @@ export default function HeroCodeSection() {
   }
 
   return (
-    <>
     <section className="bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid items-center gap-10 lg:grid-cols-2">
@@ -87,20 +82,19 @@ export default function HeroCodeSection() {
             </div>
           </div>
 
-          {/* Right: image only (no frame) */}
-          <div className="relative mx-auto w-full max-w-[520px]">
+          {/* Right: image, no frame clipping */}
+          <div className="relative mx-auto w-full max-w-[520px] rounded-[36px] overflow-hidden">
             <img
               src={imgSrc}
               onError={(e) => { if (e.currentTarget.src !== remoteFallback) setImgSrc(remoteFallback) }}
               alt="Hero"
-              className="h-[520px] w-full object-cover"
+              className="w-full h-auto select-none"
+              draggable={false}
             />
           </div>
         </div>
 
       </div>
     </section>
-    <StatsSvgSection />
-    </>
   )
 }

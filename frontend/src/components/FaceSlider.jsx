@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react'
 // You can pass your own base names via props: <FaceSlider names={["girl-1","girl-2","girl-3","girl-4"]} />
 export default function FaceSlider({ names }) {
   // Auto-discover assets as absolute URLs via Vite
-  const assets = import.meta.glob('../assets/*.{svg,png,jpg,jpeg,webp,avif}', { eager: true, as: 'url' })
+  const assets = import.meta.glob('../assets/*.{svg,png,jpg,jpeg,webp,avif}', { eager: true, query: '?url', import: 'default' })
   const findAsset = (basename) => {
     const entry = Object.entries(assets).find(([p]) => p.includes(`/assets/${basename}.`))
     return entry ? entry[1] : null

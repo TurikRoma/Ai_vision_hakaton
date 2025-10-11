@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Landing from './pages/Landing.jsx'
 import Scan from './pages/Scan.jsx'
-import Results from './pages/Results.jsx'
 import Profile from './pages/Profile.jsx'
 import Footer from './components/Footer.jsx'
 import Header from './components/Header.jsx'
+import LightingModal from './components/LightingModal.jsx'
 import { AppProvider } from './context/AppContext.jsx'
 
 export default function App() {
@@ -17,12 +17,12 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/scan" element={<Scan />} />
-              <Route path="/results" element={<Results />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
           <Footer />
+          <LightingModal />
         </div>
       </BrowserRouter>
     </AppProvider>

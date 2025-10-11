@@ -1,76 +1,74 @@
-import { NavLink, Link } from 'react-router-dom'
-
-function MenuItem({ label, to, children }) {
-  const hasDropdown = Array.isArray(children) && children.length > 0
-  return (
-    <div className="relative group">
-      <NavLink
-        to={to || '#'}
-        className={({ isActive }) =>
-          `px-3 py-2 text-sm font-medium transition-colors ${
-            isActive ? 'text-white' : 'text-slate-300 hover:text-white'
-          }`
-        }
-      >
-        <span className="inline-flex items-center gap-1">
-          {label}
-          {hasDropdown && <span className="text-slate-500 group-hover:text-slate-300">▾</span>}
-        </span>
-      </NavLink>
-      {hasDropdown && (
-        <div className="absolute left-0 top-full hidden min-w-[220px] translate-y-2 rounded-lg border border-slate-800/60 bg-slate-900/95 p-2 shadow-lg backdrop-blur group-hover:block">
-          {children.map((item) => (
-            <Link
-              key={item.label}
-              to={item.to || '#'}
-              className="block rounded-md px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
+// Minimal header: left logo, right profile menu
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { logout } from '../lib/api'
+import logoUrl from '../assets/logo.svg?url'
 
 export default function Header() {
+  const [open, setOpen] = useState(false)
+  const btnRef = useRef(null)
+  const menuRef = useRef(null)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    function onDocClick(e) {
+      if (!open) return
+      if (btnRef.current?.contains(e.target) || menuRef.current?.contains(e.target)) return
+      setOpen(false)
+    }
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [open])
+
+  async function onLogout() {
+    try { await logout() } catch {}
+    setOpen(false)
+    navigate('/')
+  }
+
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-800/60 bg-slate-950/80 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-14 items-center justify-between">
           {/* Brand */}
-          <Link to="/" className="flex items-center gap-2">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-tr from-cyan-400 to-sky-500 text-slate-900 font-bold">◈</span>
-            <span className="text-base font-semibold text-white">AIFace</span>
-          </Link>
+          <a href="/" className="flex items-center gap-2">
+            <img src={logoUrl} alt="logo" className="h-7 w-auto" />
+          </a>
 
-          {/* Nav */}
-          <nav className="hidden md:flex items-center gap-2">
-            <MenuItem label="Платформа" to="#" children={[
-              { label: 'Возможности', to: '#' },
-              { label: 'Безопасность', to: '#' },
-              { label: 'Интеграции', to: '#' },
-            ]} />
-            <MenuItem label="Цены" to="#" />
-            <MenuItem label="Компания" to="#" children={[
-              { label: 'О нас', to: '#' },
-              { label: 'Контакты', to: '#' },
-            ]} />
-            <MenuItem label="Ресурсы" to="#" children={[
-              { label: 'Документация', to: '#' },
-              { label: 'Руководства', to: '#' },
-            ]} />
-          </nav>
-
-          {/* Right CTA */}
-          <div className="flex items-center gap-3">
-            <Link
-              to="/scan"
-              className="inline-flex items-center justify-center rounded-full border border-cyan-500/40 bg-cyan-600/10 px-3 py-1.5 text-sm font-medium text-cyan-300 hover:bg-cyan-600/20"
+          {/* Profile menu */}
+          <div className="relative flex items-center">
+            <button
+              ref={btnRef}
+              onClick={() => setOpen((v) => !v)}
+              className="inline-grid h-12 w-12 place-items-center rounded-full ring-1 ring-slate-200 bg-white hover:ring-slate-300"
+              aria-haspopup="menu"
+              aria-expanded={open}
+              title="Профиль"
             >
-              Scan yourself
-            </Link>
+              <img src="/icon.svg" alt="profile" className="h-11 w-11 rounded-full" />
+            </button>
+            {open && (
+              <div
+                ref={menuRef}
+                className="absolute right-0 top-[calc(100%+8px)] w-44 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl"
+                role="menu"
+              >
+                <button
+                  onClick={() => { setOpen(false); navigate('/profile') }}
+                  className="block w-full px-4 py-2.5 text-left text-sm text-slate-800 hover:bg-slate-50"
+                  role="menuitem"
+                >
+                  История
+                </button>
+                <button
+                  onClick={onLogout}
+                  className="block w-full px-4 py-2.5 text-left text-sm text-rose-700 hover:bg-rose-50/60"
+                  role="menuitem"
+                >
+                  Выйти
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
