@@ -248,6 +248,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                   const SizedBox(height: 8),
                   MarkdownWidget(
                     data: analysis.recommendations ?? 'Рекомендации отсутствуют.',
+                    shrinkWrap: true,
                     config: MarkdownConfig(
                       configs: [
                         PConfig(

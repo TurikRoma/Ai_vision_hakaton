@@ -14,6 +14,17 @@ class AnalysisBase(BaseModel):
     skin_health: int | None = None
 
 
+class AnalysisResult(BaseModel):
+    recommendations: str
+    puffiness: int
+    dark_circles: int
+    fatigue: int
+    acne: int
+    skin_condition: str
+    eyes_health: int
+    skin_health: int
+
+
 class AnalysisCreate(AnalysisBase):
     image_path: str
     owner_id: int | None = None

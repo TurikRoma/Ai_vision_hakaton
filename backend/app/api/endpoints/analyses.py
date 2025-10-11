@@ -36,6 +36,58 @@ router = APIRouter()
 
 
 @router.post(
+    "/process",
+    response_model=schemas_analysis.AnalysisResult,
+)
+async def process_analysis(
+    pipeline: Annotated[ModelPipeline, Depends(get_pipeline)],
+    file: UploadFile = File(...),
+):
+    """
+    Process image and return analysis without saving.
+    """
+    if not pipeline:
+        raise HTTPException(status_code=500, detail="Models not loaded")
+
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
+            shutil.copyfileobj(file.file, tmp)
+            tmp_path = tmp.name
+
+        results = await pipeline.process_image(tmp_path)
+    finally:
+        if "tmp_path" in locals() and os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+    if not results:
+        raise HTTPException(
+            status_code=400, detail="No faces detected in the image"
+        )
+
+    text = pipeline.print_results(results)
+    llm_answer = await llm_response(text)
+    parsed_text = await pipeline.parse_llm_response(llm_answer)
+
+    rec_text = parsed_text["analysis_text"]
+    diagram = parsed_text.get("parameters", {})
+
+    analysis_result = schemas_analysis.AnalysisResult(
+        recommendations=rec_text,
+        puffiness=int(diagram.get("swelling", 0)),
+        dark_circles=int(diagram.get("eyes_darkircles", 0)),
+        fatigue=int(diagram.get("tireness", 0)),
+        acne=int(diagram.get("acne", 0)),
+        eyes_health=int(diagram.get("eyes_health", 0)),
+        skin_health=int(diagram.get("skin_health", 0)),
+        skin_condition=diagram.get(
+            "skin_condition",
+            "Описание состояния кожи не было сгенерировано.",
+        ),
+    )
+    return analysis_result
+
+
+@router.post(
     "/",
     response_model=schemas_analysis.Analysis,
 )
@@ -44,7 +96,6 @@ async def create_analysis(
     current_user: Annotated[
         models.User | None, Depends(get_optional_current_user)
     ],
-    pipeline: Annotated[ModelPipeline, Depends(get_pipeline)],
     file: UploadFile = File(...),
     recommendations: str = Form(...),
     puffiness: int = Form(...),
@@ -52,56 +103,26 @@ async def create_analysis(
     fatigue: int = Form(...),
     acne: int = Form(...),
     skin_condition: str = Form(...),
+    eyes_health: int = Form(...),
+    skin_health: int = Form(...),
 ):
-
-    # Получаем пайплайн и обрабатываем изображение
-    if not pipeline:
-        raise HTTPException(status_code=500, detail="Models not loaded")
-    
-    # Создаем временный файл, чтобы сохранить загруженное изображение
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
-            shutil.copyfileobj(file.file, tmp)
-            tmp_path = tmp.name
-        
-        # Обрабатываем изображение через пайплайн, используя путь к временному файлу
-        results = await pipeline.process_image(tmp_path)
-    finally:
-        # Удаляем временный файл после обработки
-        if 'tmp_path' in locals() and os.path.exists(tmp_path):
-            os.remove(tmp_path)
-    
-    if not results:
-        raise HTTPException(status_code=400, detail="No faces detected in the image")
-    
-    # Форматируем результаты и отправляем в LLM
-    text = pipeline.print_results(results)
-
-    print(text + '\n\n\n')
-
-    llm_answer = await llm_response(text)
-
-    print(llm_answer)
-
-    parsed_text = await pipeline.parse_llm_response(llm_answer)
-
-    rec_text = parsed_text["analysis_text"]
-    diagram = parsed_text.get("parameters", {})
-    
+    """
+    Create a new analysis and save it to the database.
+    """
     file_url = await storage_service.upload_file(file)
 
     owner_id = current_user.id if current_user else None
     analysis_in = schemas_analysis.AnalysisCreate(
         image_path=file_url,
         owner_id=owner_id,
-        recommendations=rec_text,
-        puffiness=int(diagram.get("swelling", 0)),
-        dark_circles=int(diagram.get("eyes_darkircles", 0)),
-        fatigue=int(diagram.get("tireness", 0)),
-        acne=int(diagram.get("acne", 0)),
-        eyes_health=int(diagram.get("eyes_health", 0)),
-        skin_health=int(diagram.get("skin_health", 0)),
-        skin_condition=diagram.get("skin_condition", "Описание состояния кожи не было сгенерировано."),
+        recommendations=recommendations,
+        puffiness=puffiness,
+        dark_circles=dark_circles,
+        fatigue=fatigue,
+        acne=acne,
+        eyes_health=eyes_health,
+        skin_health=skin_health,
+        skin_condition=skin_condition,
     )
 
     analysis = await crud_analysis.create_analysis(db, analysis_in=analysis_in)
