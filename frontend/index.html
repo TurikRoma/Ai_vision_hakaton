@@ -6,9 +6,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AIFace — Health Scan Demo</title>
     <meta name="description" content="UI демо-прототип: анализ состояния по фото лица. Без ML и бэкенда." />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://storage.googleapis.com" crossorigin>
   </head>
   <body>
     <div id="root"></div>
+    <script type="module">
+      import { FaceDetector, FilesetResolver } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0'
+      window.TasksVision = { FaceDetector, FilesetResolver }
+
+      const wasmBaseLocal = '/mediapipe/wasm'
+      const wasmBaseCDN = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm'
+      const modelLocal = '/models/blaze_face_short_range.tflite'
+      const modelCDN = 'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite'
+      const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 300))
+
+      idle(async () => {
+        // Try to preload local WASM, fallback to CDN
+        try {
+          const vision = await FilesetResolver.forVisionTasks(wasmBaseLocal)
+          window.TasksVisionPreloadedVision = vision
+        } catch (e1) {
+          try {
+            const vision = await FilesetResolver.forVisionTasks(wasmBaseCDN)
+            window.TasksVisionPreloadedVision = vision
+          } catch {}
+        }
+        // Warm model into cache: prefer local, fallback to CDN
+        try {
+          const head = await fetch(modelLocal, { method: 'HEAD', cache: 'no-cache' })
+          if (!head.ok) throw new Error('local model not found')
+          await fetch(modelLocal, { cache: 'force-cache' })
+        } catch (e2) {
+          try { await fetch(modelCDN, { cache: 'force-cache', mode: 'cors' }) } catch {}
+        }
+      })
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

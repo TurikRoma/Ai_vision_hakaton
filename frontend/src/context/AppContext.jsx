@@ -8,6 +8,8 @@ const initialState = {
   imageDataUrl: null,
   analysis: null,
   history: [],
+  showLightingModal: false,
+  pendingIntent: null, // 'scan' | 'upload' | null
 }
 
 function reducer(state, action) {
@@ -26,6 +28,14 @@ function reducer(state, action) {
       const updated = state.history.filter((h) => h.id !== action.payload)
       return { ...state, history: updated }
     }
+    case 'OPEN_LIGHTING_MODAL':
+      return { ...state, showLightingModal: true }
+    case 'CLOSE_LIGHTING_MODAL':
+      return { ...state, showLightingModal: false }
+    case 'SET_INTENT':
+      return { ...state, pendingIntent: action.payload }
+    case 'CLEAR_INTENT':
+      return { ...state, pendingIntent: null }
     default:
       return state
   }

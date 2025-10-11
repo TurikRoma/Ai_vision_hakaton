@@ -68,18 +68,18 @@ function Item({ i, onToggle }) {
 }
 
 export default function FAQ() {
-  const [items, setItems] = useState(ITEMS.map((x, i) => ({ ...x, open: i === 0 })))
+  const [items, setItems] = useState(ITEMS.map((x) => ({ ...x, open: false })))
 
   function toggleIdx(idx) {
     setItems((arr) => arr.map((x, i) => (i === idx ? { ...x, open: !x.open } : x)))
   }
 
   return (
-    <section className="bg-gradient-to-b from-white to-slate-50 py-14">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-end justify-between">
-          <h2 className="text-2xl font-semibold text-slate-900">FAQ</h2>
-          <span className="text-xs text-slate-500">Обновляется по мере обратной связи</span>
+    <section className="bg-gradient-to-b from-white to-slate-50 py-16">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-8 flex items-end justify-between">
+          <h2 className="text-3xl font-semibold text-slate-900">FAQ</h2>
+          <span className="text-sm text-slate-500">Обновляется по мере обратной связи</span>
         </div>
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           {items.map((i, idx) => (
