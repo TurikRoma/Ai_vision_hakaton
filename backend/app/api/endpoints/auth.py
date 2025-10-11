@@ -17,7 +17,7 @@ from app.core.security import (
 )
 from app.crud import refresh_token as crud_refresh_token
 from app.crud import user as crud_user
-from app.schemas.token import Token
+from app.schemas.token import RefreshToken, Token
 from app.schemas.user import User, UserCreate
 
 router = APIRouter()
@@ -26,7 +26,6 @@ logger = get_logger(__name__)
 
 @router.post("/signup", response_model=Token)
 async def signup(
-    response: Response,
     user_in: UserCreate,
     db: Annotated[AsyncSession, Depends(get_db_session)],
 ):
@@ -57,19 +56,15 @@ async def signup(
         expires_at=expires_at,
     )
 
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        samesite="lax",
-        secure=True,
+    return Token(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
     )
-    return Token(access_token=access_token, token_type="bearer")
 
 
-@router.post("/login")
+@router.post("/login", response_model=Token)
 async def login(
-    response: Response,
     db: Annotated[AsyncSession, Depends(get_db_session)],
     user_in: UserCreate,
 ):
@@ -98,25 +93,21 @@ async def login(
         expires_at=expires_at,
     )
 
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        samesite="lax",
-        secure=True,
-    )
     logger.info("User %s logged in successfully", user.email)
-    return Token(access_token=access_token, token_type="bearer")
+    return Token(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+    )
 
 
-@router.post("/refresh")
+@router.post("/refresh", response_model=Token)
 async def refresh(
-    request: Request,
-    response: Response,
+    token_in: RefreshToken,
     db: Annotated[AsyncSession, Depends(get_db_session)],
 ):
     """Refresh an access token."""
-    refresh_token_value = request.cookies.get("refresh_token")
+    refresh_token_value = token_in.refresh_token
     if not refresh_token_value:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -174,24 +165,20 @@ async def refresh(
         expires_at=new_expires_at,
     )
 
-    response.set_cookie(
-        key="refresh_token",
-        value=new_refresh_token,
-        httponly=True,
-        samesite="lax",
-        secure=True,
+    return Token(
+        access_token=new_access_token,
+        refresh_token=new_refresh_token,
+        token_type="bearer",
     )
-    return Token(access_token=new_access_token, token_type="bearer")
 
 
 @router.post("/logout")
 async def logout(
-    request: Request,
-    response: Response,
+    token_in: RefreshToken,
     db: Annotated[AsyncSession, Depends(get_db_session)],
 ):
     """Log out a user."""
-    refresh_token_value = request.cookies.get("refresh_token")
+    refresh_token_value = token_in.refresh_token
     if refresh_token_value:
         hashed_token = get_refresh_token_hash(refresh_token_value)
         db_token = await crud_refresh_token.get_refresh_token_by_value(
@@ -202,5 +189,4 @@ async def logout(
                 db, token_id=db_token.id
             )
 
-    response.delete_cookie("refresh_token")
     return {"message": "Successfully logged out"}
