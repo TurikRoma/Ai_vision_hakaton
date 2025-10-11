@@ -1,0 +1,9 @@
+# Rider
+.idea/
+.idea/libraries/
+.idea/runConfigurations/
+.idea/shelf/
+
+# Environment variables
+.env
+env.txt

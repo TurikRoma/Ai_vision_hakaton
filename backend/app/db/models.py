@@ -23,11 +23,20 @@ class Analysis(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     image_path: Mapped[str] = mapped_column(sa.String(1024))
-    result: Mapped[dict] = mapped_column(sa.JSON, nullable=True)
+    recommendations: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    puffiness: Mapped[int | None] = mapped_column(sa.Integer, nullable=True)
+    dark_circles: Mapped[int | None] = mapped_column(sa.Integer, nullable=True)
+    fatigue: Mapped[int | None] = mapped_column(sa.Integer, nullable=True)
+    acne: Mapped[int | None] = mapped_column(sa.Integer, nullable=True)
+    skin_condition: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    eyes_health: Mapped[int | None] = mapped_column(sa.Integer, nullable=True)
+    skin_health: Mapped[int | None] = mapped_column(sa.Integer, nullable=True)
     created_at: Mapped[sa.DateTime] = mapped_column(
         sa.DateTime(timezone=True), default=sa.func.now()
     )
-    owner_id: Mapped[int] = mapped_column(sa.ForeignKey("users.id"))
+    owner_id: Mapped[int | None] = mapped_column(
+        sa.ForeignKey("users.id"), nullable=True
+    )
 
     owner = relationship("User", back_populates="analyses")
 

@@ -34,5 +34,7 @@ class Settings(BaseSettings):
     MINIO_ROOT_USER: str
     MINIO_PUBLIC_URL: str
 
+    INTERNAL_API_KEY: str
+
 
 settings = Settings()
