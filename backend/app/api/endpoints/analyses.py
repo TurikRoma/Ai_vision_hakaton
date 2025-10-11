@@ -16,6 +16,9 @@ from app.db import models
 from app.schemas import analysis as schemas_analysis
 from app.services.storage import storage_service
 
+
+from ML.llm_handler import llm_response
+from app.main import get_pipeline
 router = APIRouter()
 
 
@@ -31,9 +34,27 @@ async def create_analysis(
     ],
     file: UploadFile = File(...),
 ):
-    """
-    Upload a file for analysis.
-    """
+
+    # Получаем пайплайн и обрабатываем изображение
+    pipeline = get_pipeline()
+    if not pipeline:
+        raise HTTPException(status_code=500, detail="Models not loaded")
+    
+    # Обрабатываем изображение через пайплайн
+    results = await pipeline.process_image(file)
+    
+    if not results:
+        raise HTTPException(status_code=400, detail="No faces detected in the image")
+    
+    # Форматируем результаты и отправляем в LLM
+    text = pipeline.print_results(results)
+
+    llm_answer = await llm_response(text)
+    parsed_text = await pipeline.parse_llm_response(llm_answer)
+
+    rec_text = parsed_text["analysis_text"]
+    diagram = parsed_text["parameters"]
+    
     file_url = await storage_service.upload_file(file)
 
     owner_id = current_user.id if current_user else None
