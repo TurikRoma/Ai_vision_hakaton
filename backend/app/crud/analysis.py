@@ -9,10 +9,8 @@ async def create_analysis(
     db: AsyncSession, *, analysis_in: AnalysisCreate
 ) -> models.Analysis:
     """Create a new analysis."""
-    db_obj = models.Analysis(
-        image_path=analysis_in.image_path,
-        owner_id=analysis_in.owner_id,
-    )
+    analysis_data = analysis_in.model_dump()
+    db_obj = models.Analysis(**analysis_data)
     db.add(db_obj)
     await db.commit()
     await db.refresh(db_obj)

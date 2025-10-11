@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile/features/auth/auth_provider.dart';
-import 'package:mobile/features/result/result_screen.dart';
+import 'package:mobile/features/profile/analysis_details_screen.dart';
 import 'package:mobile/models.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -73,45 +73,51 @@ class ProfileScreen extends ConsumerWidget {
                       itemCount: analyses.length,
                       itemBuilder: (context, index) {
                         final analysis = analyses[index];
-                        return Card(
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(
-                                child: Image.network(
-                                  analysis.imagePath,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Container(
-                                    color: Colors.grey[300],
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    AnalysisDetailsScreen(analysis: analysis),
+                              ),
+                            );
+                          },
+                          child: Card(
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    color: Colors.grey[200],
                                     child: Center(
                                       child: Icon(
-                                        Icons.image,
-                                        color: Colors.grey[600],
+                                        Icons.image_outlined,
+                                        color: Colors.grey[400],
                                         size: 40,
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  DateFormat('dd.MM.yyyy')
-                                      .format(analysis.createdAt),
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    DateFormat('dd.MM.yyyy HH:mm')
+                                        .format(analysis.createdAt),
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         );
                       },

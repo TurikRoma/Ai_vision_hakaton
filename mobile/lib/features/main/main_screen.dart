@@ -57,12 +57,20 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildBody() {
     switch (_currentScreen) {
       case AppScreen.processing:
+        if (_imagePath == null) {
+          Future.microtask(() => _navigateTo(AppScreen.home));
+          return const SizedBox.shrink();
+        }
         return ProcessingScreen(
           imagePath: _imagePath!,
           onCancel: () => _navigateTo(AppScreen.home),
           onComplete: (path) => _navigateTo(AppScreen.result, imagePath: path),
         );
       case AppScreen.result:
+        if (_imagePath == null) {
+          Future.microtask(() => _navigateTo(AppScreen.home));
+          return const SizedBox.shrink();
+        }
         return ResultScreen(
           imagePath: _imagePath!,
           onBack: () => _navigateTo(AppScreen.home),

@@ -56,7 +56,10 @@ class ApiClient {
     return response;
   }
 
-  Future<http.Response> _get(String path, {bool authenticated = false}) async {
+  Future<http.Response> _get(
+    String path, {
+    bool authenticated = false,
+  }) async {
     final headers = <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     };
@@ -80,6 +83,8 @@ class ApiClient {
         );
       } else {
         await _tokenStorageService.deleteTokens();
+        // Here you might want to navigate the user to the login screen.
+        // This can be handled by the auth provider.
       }
     }
 
@@ -155,8 +160,6 @@ class ApiClient {
 
   // Example of an authenticated endpoint
   Future<List<Analysis>> getAnalyses() async {
-    // We reuse the _post method for simplicity, but for GET requests,
-    // a _get method would be more appropriate.
     final response = await _get('/analyses/', authenticated: true);
     if (response.statusCode == 200) {
       final List<dynamic> analysesJson = jsonDecode(response.body);
@@ -166,16 +169,20 @@ class ApiClient {
     }
   }
 
-  Future<Analysis> createAnalysis(String filePath) async {
+  Future<Analysis> createAnalysis(
+    String filePath,
+    Map<String, String> analysisData,
+  ) async {
     final uri = Uri.parse('$_baseUrl/analyses/');
     final request = http.MultipartRequest('POST', uri);
-
-    request.headers['X-API-Key'] = _internalApiKey;
 
     final accessToken = await _tokenStorageService.getAccessToken();
     if (accessToken != null) {
       request.headers['Authorization'] = 'Bearer $accessToken';
     }
+
+    // Add text fields
+    request.fields.addAll(analysisData);
 
     final file = await http.MultipartFile.fromPath(
       'file',
@@ -190,7 +197,8 @@ class ApiClient {
       final responseBody = await response.stream.bytesToString();
       return Analysis.fromJson(jsonDecode(responseBody));
     } else {
-      throw Exception('Failed to create analysis');
+      final responseBody = await response.stream.bytesToString();
+      throw Exception('Failed to create analysis: $responseBody');
     }
   }
 }
