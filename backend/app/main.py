@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.api import api_router
 from app.core.logging_config import setup_logging
@@ -10,6 +11,8 @@ app = FastAPI(
     title="AI Vision Hakaton",
     openapi_url="/docs/openapi.json",
 )
+
+app.mount("/media", StaticFiles(directory="media"), name="media")
 
 # Set all CORS enabled origins
 app.add_middleware(

@@ -78,6 +78,29 @@ async def read_analysis(
     return analysis
 
 
+@router.patch("/{analysis_id}", response_model=schemas_analysis.Analysis)
+async def update_analysis(
+    analysis_id: int,
+    analysis_in: schemas_analysis.AnalysisUpdate,
+    db: Annotated[AsyncSession, Depends(get_db_session)],
+    # TODO: Add security check, e.g. internal service key
+):
+    """
+    Update an analysis with results.
+    """
+    db_analysis = await crud_analysis.get_analysis(db, analysis_id=analysis_id)
+    if not db_analysis:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analysis not found",
+        )
+
+    updated_analysis = await crud_analysis.update_analysis(
+        db, db_obj=db_analysis, obj_in=analysis_in
+    )
+    return updated_analysis
+
+
 @router.patch(
     "/{analysis_id}/assign", response_model=schemas_analysis.Analysis
 )
