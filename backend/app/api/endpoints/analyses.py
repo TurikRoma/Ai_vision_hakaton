@@ -1,6 +1,9 @@
 import uuid
 from pathlib import Path
 from typing import Annotated
+import tempfile
+import shutil
+import os
 
 from fastapi import (
     APIRouter,
@@ -22,7 +25,7 @@ from app.api.dependencies import (
 )
 from app.crud import analysis as crud_analysis
 from app.db import models
-from app.pipeline import ModelPipeline
+from app.services.ml_pipeline import ModelPipeline
 from app.schemas import analysis as schemas_analysis
 from app.services.storage import storage_service
 
@@ -55,8 +58,18 @@ async def create_analysis(
     if not pipeline:
         raise HTTPException(status_code=500, detail="Models not loaded")
     
-    # Обрабатываем изображение через пайплайн
-    results = await pipeline.process_image(file)
+    # Создаем временный файл, чтобы сохранить загруженное изображение
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
+            shutil.copyfileobj(file.file, tmp)
+            tmp_path = tmp.name
+        
+        # Обрабатываем изображение через пайплайн, используя путь к временному файлу
+        results = await pipeline.process_image(tmp_path)
+    finally:
+        # Удаляем временный файл после обработки
+        if 'tmp_path' in locals() and os.path.exists(tmp_path):
+            os.remove(tmp_path)
     
     if not results:
         raise HTTPException(status_code=400, detail="No faces detected in the image")
@@ -64,11 +77,16 @@ async def create_analysis(
     # Форматируем результаты и отправляем в LLM
     text = pipeline.print_results(results)
 
+    print(text + '\n\n\n')
+
     llm_answer = await llm_response(text)
+
+    print(llm_answer)
+
     parsed_text = await pipeline.parse_llm_response(llm_answer)
 
     rec_text = parsed_text["analysis_text"]
-    diagram = parsed_text["parameters"]
+    diagram = parsed_text.get("parameters", {})
     
     file_url = await storage_service.upload_file(file)
 
@@ -76,12 +94,14 @@ async def create_analysis(
     analysis_in = schemas_analysis.AnalysisCreate(
         image_path=file_url,
         owner_id=owner_id,
-        recommendations=recommendations,
-        puffiness=puffiness,
-        dark_circles=dark_circles,
-        fatigue=fatigue,
-        acne=acne,
-        skin_condition=skin_condition,
+        recommendations=rec_text,
+        puffiness=int(diagram.get("swelling", 0)),
+        dark_circles=int(diagram.get("eyes_darkircles", 0)),
+        fatigue=int(diagram.get("tireness", 0)),
+        acne=int(diagram.get("acne", 0)),
+        eyes_health=int(diagram.get("eyes_health", 0)),
+        skin_health=int(diagram.get("skin_health", 0)),
+        skin_condition=diagram.get("skin_condition", "Описание состояния кожи не было сгенерировано."),
     )
 
     analysis = await crud_analysis.create_analysis(db, analysis_in=analysis_in)

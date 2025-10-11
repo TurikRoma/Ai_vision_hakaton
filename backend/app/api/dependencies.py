@@ -5,7 +5,7 @@ from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.pipeline import ModelPipeline, get_pipeline
+from app.services.ml_pipeline import ModelPipeline, get_pipeline
 
 from app.core import config, security
 from app.crud import user as crud_user

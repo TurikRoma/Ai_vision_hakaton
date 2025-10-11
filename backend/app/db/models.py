@@ -29,6 +29,8 @@ class Analysis(Base):
     fatigue: Mapped[int | None] = mapped_column(sa.Integer, nullable=True)
     acne: Mapped[int | None] = mapped_column(sa.Integer, nullable=True)
     skin_condition: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    eyes_health: Mapped[int | None] = mapped_column(sa.Integer, nullable=True)
+    skin_health: Mapped[int | None] = mapped_column(sa.Integer, nullable=True)
     created_at: Mapped[sa.DateTime] = mapped_column(
         sa.DateTime(timezone=True), default=sa.func.now()
     )

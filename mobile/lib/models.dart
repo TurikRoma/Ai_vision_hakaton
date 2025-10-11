@@ -14,6 +14,8 @@ class Analysis {
   final int? fatigue;
   final int? acne;
   final String? skinCondition;
+  final int? eyesHealth;
+  final int? skinHealth;
 
   Analysis({
     required this.id,
@@ -25,6 +27,8 @@ class Analysis {
     this.fatigue,
     this.acne,
     this.skinCondition,
+    this.eyesHealth,
+    this.skinHealth,
   });
 
   factory Analysis.fromJson(Map<String, dynamic> json) {
@@ -38,6 +42,8 @@ class Analysis {
       fatigue: json['fatigue'],
       acne: json['acne'],
       skinCondition: json['skin_condition'],
+      eyesHealth: json['eyes_health'],
+      skinHealth: json['skin_health'],
     );
   }
 }

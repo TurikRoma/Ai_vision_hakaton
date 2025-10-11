@@ -12,6 +12,8 @@ from PIL import Image
 from ultralytics import YOLO
 from torchvision.models import mobilenet_v3_small
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 class ModelPipeline:
     def __init__(self):
         self.models = {}
@@ -21,31 +23,31 @@ class ModelPipeline:
         # Конфигурация моделей
         self.model_configs = {
             'yolo': {
-                'path': 'model.pt',
+                'path': str(BASE_DIR / 'model.pt'),
                 'type': 'yolo'
             },
             'mobilenet_skin': {
-                'path': 'mobilenet_skin.pth',
+                'path': str(BASE_DIR / 'mobilenet_skin.pth'),
                 'num_classes': 3,
                 'class_names': ['acne', 'freckles', 'healthy']
             },
             'mobilenet_age': {
-                'path': 'mobilenet_age.pth', 
+                'path': str(BASE_DIR / 'mobilenet_age.pth'), 
                 'num_classes': 6,
                 'class_names': ['adult', 'baby', 'child', 'middle', 'pensioner', 'teenage']
             },
             'mobilenet_eyes_darkcircles': {
-                'path': 'mobilenet_darkcircles.pth',
+                'path': str(BASE_DIR / 'mobilenet_darkcircles.pth'),
                 'num_classes': 3, 
                 'class_names': ['darkcircles', 'healthy', 'light_darkcircles']
             },
             'mobilenet_eyes_pupils': {
-                'path': 'mobilenet_eyes_pupils.pth',
+                'path': str(BASE_DIR / 'mobilenet_eyes_pupils.pth'),
                 'num_classes': 3,
                 'class_names': ['conjunctivitis', 'healthy', 'yellowness']
             },
             'mobilenet_general': {
-                'path': 'mobilenet_general.pth',
+                'path': str(BASE_DIR / 'mobilenet_general.pth'),
                 'num_classes': 2,
                 'class_names': ['edema', 'healthy'] 
             }
@@ -334,3 +336,8 @@ class ModelPipeline:
                 "analysis_text": llm_answer,
                 "parameters": {}
             }
+
+pipeline = ModelPipeline()
+
+def get_pipeline() -> ModelPipeline:
+    return pipeline

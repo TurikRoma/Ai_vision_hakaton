@@ -16,7 +16,7 @@ import time
 
 from app.api.api import api_router
 from app.core.logging_config import setup_logging
-from app.pipeline import pipeline
+from app.services.ml_pipeline import pipeline
 
 setup_logging()
 
