@@ -56,36 +56,6 @@ class ApiClient {
     return response;
   }
 
-  Future<http.Response> _get(String path, {bool authenticated = false}) async {
-    final headers = <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    };
-    if (authenticated) {
-      final accessToken = await _tokenStorageService.getAccessToken();
-      headers['Authorization'] = 'Bearer $accessToken';
-    }
-
-    var response = await http.get(
-      Uri.parse('$_baseUrl$path'),
-      headers: headers,
-    );
-
-    if (authenticated && response.statusCode == 401) {
-      final newTokens = await _refreshToken();
-      if (newTokens != null) {
-        headers['Authorization'] = 'Bearer ${newTokens['access_token']}';
-        response = await http.get(
-          Uri.parse('$_baseUrl$path'),
-          headers: headers,
-        );
-      } else {
-        await _tokenStorageService.deleteTokens();
-      }
-    }
-
-    return response;
-  }
-
   Future<Map<String, dynamic>?> _refreshToken() async {
     final refreshToken = await _tokenStorageService.getRefreshToken();
     if (refreshToken == null) return null;
@@ -155,9 +125,7 @@ class ApiClient {
 
   // Example of an authenticated endpoint
   Future<List<Analysis>> getAnalyses() async {
-    // We reuse the _post method for simplicity, but for GET requests,
-    // a _get method would be more appropriate.
-    final response = await _get('/analyses/', authenticated: true);
+    final response = await _post('/analyses/', authenticated: true);
     if (response.statusCode == 200) {
       final List<dynamic> analysesJson = jsonDecode(response.body);
       return analysesJson.map((json) => Analysis.fromJson(json)).toList();
@@ -166,7 +134,10 @@ class ApiClient {
     }
   }
 
-  Future<Analysis> createAnalysis(String filePath) async {
+  Future<Analysis> createAnalysis(
+    String filePath,
+    Map<String, String> analysisData,
+  ) async {
     final uri = Uri.parse('$_baseUrl/analyses/');
     final request = http.MultipartRequest('POST', uri);
 
@@ -176,6 +147,9 @@ class ApiClient {
     if (accessToken != null) {
       request.headers['Authorization'] = 'Bearer $accessToken';
     }
+
+    // Add text fields
+    request.fields.addAll(analysisData);
 
     final file = await http.MultipartFile.fromPath(
       'file',
@@ -190,7 +164,8 @@ class ApiClient {
       final responseBody = await response.stream.bytesToString();
       return Analysis.fromJson(jsonDecode(responseBody));
     } else {
-      throw Exception('Failed to create analysis');
+      final responseBody = await response.stream.bytesToString();
+      throw Exception('Failed to create analysis: $responseBody');
     }
   }
 }

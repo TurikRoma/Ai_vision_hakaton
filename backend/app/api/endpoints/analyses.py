@@ -2,7 +2,15 @@ import uuid
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+    status,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import (
@@ -30,6 +38,12 @@ async def create_analysis(
         models.User | None, Depends(get_optional_current_user)
     ],
     file: UploadFile = File(...),
+    recommendations: str = Form(...),
+    puffiness: int = Form(...),
+    dark_circles: int = Form(...),
+    fatigue: int = Form(...),
+    acne: int = Form(...),
+    skin_condition: str = Form(...),
 ):
     """
     Upload a file for analysis.
@@ -38,8 +52,16 @@ async def create_analysis(
 
     owner_id = current_user.id if current_user else None
     analysis_in = schemas_analysis.AnalysisCreate(
-        image_path=file_url, owner_id=owner_id
+        image_path=file_url,
+        owner_id=owner_id,
+        recommendations=recommendations,
+        puffiness=puffiness,
+        dark_circles=dark_circles,
+        fatigue=fatigue,
+        acne=acne,
+        skin_condition=skin_condition,
     )
+
     analysis = await crud_analysis.create_analysis(db, analysis_in=analysis_in)
     return analysis
 
@@ -76,29 +98,6 @@ async def read_analysis(
             detail="Not authorized to access this analysis",
         )
     return analysis
-
-
-@router.patch("/{analysis_id}", response_model=schemas_analysis.Analysis)
-async def update_analysis(
-    analysis_id: int,
-    analysis_in: schemas_analysis.AnalysisUpdate,
-    db: Annotated[AsyncSession, Depends(get_db_session)],
-    # TODO: Add security check, e.g. internal service key
-):
-    """
-    Update an analysis with results.
-    """
-    db_analysis = await crud_analysis.get_analysis(db, analysis_id=analysis_id)
-    if not db_analysis:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Analysis not found",
-        )
-
-    updated_analysis = await crud_analysis.update_analysis(
-        db, db_obj=db_analysis, obj_in=analysis_in
-    )
-    return updated_analysis
 
 
 @router.patch(

@@ -11,7 +11,7 @@ class AnalysisBase(BaseModel):
     skin_condition: str | None = None
 
 
-class AnalysisCreate(BaseModel):
+class AnalysisCreate(AnalysisBase):
     image_path: str
     owner_id: int | None = None
 

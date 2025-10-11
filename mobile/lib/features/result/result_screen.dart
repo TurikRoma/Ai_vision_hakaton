@@ -135,6 +135,18 @@ class ResultScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
 
+    // Временные значения параметров (0..100)
+    final Map<String, int> values = {
+      'Качество сна': 76,
+      'Уровень стресса': 52,
+      'Гидратация': 63,
+      'Состояние кожи': 34,
+      'Энергия': 88,
+    };
+    final recommendations = _buildRecommendations(values);
+    final skinCondition =
+        'На основе анализа, состояние кожи оценено в ${values['Состояние кожи']}%.';
+
     Future<void> onSavePressed() async {
       if (authState.value == null) {
         Navigator.push(
@@ -145,7 +157,15 @@ class ResultScreen extends ConsumerWidget {
       }
       try {
         final apiClient = ref.read(apiClientProvider);
-        final analysis = await apiClient.createAnalysis(imagePath);
+        final analysisData = {
+          'recommendations': recommendations,
+          'puffiness': values['Гидратация']!.toString(), // Assuming puffiness maps to Hydration
+          'dark_circles': values['Уровень стресса']!.toString(), // Assuming maps to Stress
+          'fatigue': values['Качество сна']!.toString(), // Assuming maps to Sleep Quality
+          'acne': values['Состояние кожи']!.toString(), // Assuming maps to Skin Condition
+          'skin_condition': skinCondition,
+        };
+        await apiClient.createAnalysis(imagePath, analysisData);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Анализ успешно сохранён'),
@@ -161,15 +181,6 @@ class ResultScreen extends ConsumerWidget {
         );
       }
     }
-
-    // Временные значения параметров (0..100)
-    final Map<String, int> values = {
-      'Качество сна': 76,
-      'Уровень стресса': 52,
-      'Гидратация': 63,
-      'Состояние кожи': 34,
-      'Энергия': 88,
-    };
 
     return Scaffold(
       backgroundColor: Colors.white,
