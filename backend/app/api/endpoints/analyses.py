@@ -30,7 +30,7 @@ from app.schemas import analysis as schemas_analysis
 from app.services.storage import storage_service
 
 
-from ML.llm_handler import llm_response
+from app.llm_handler import llm_response
 
 router = APIRouter()
 

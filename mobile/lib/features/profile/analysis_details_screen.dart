@@ -203,3 +203,4 @@ class AnalysisDetailsScreen extends StatelessWidget {
     );
   }
 }
+

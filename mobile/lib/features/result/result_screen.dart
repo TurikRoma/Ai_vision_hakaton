@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:markdown_widget/markdown_widget.dart';
 import 'package:mobile/features/auth/auth_provider.dart';
 import 'package:mobile/features/auth/login_screen.dart';
 import 'package:mobile/models.dart';
@@ -245,12 +246,18 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    analysis.recommendations ?? 'Рекомендации отсутствуют.',
-                    style: GoogleFonts.manrope(
-                      fontSize: 14,
-                      color: Colors.black87,
-                      height: 1.5,
+                  MarkdownWidget(
+                    data: analysis.recommendations ?? 'Рекомендации отсутствуют.',
+                    config: MarkdownConfig(
+                      configs: [
+                        PConfig(
+                          textStyle: GoogleFonts.manrope(
+                            fontSize: 14,
+                            color: Colors.black87,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 24),
