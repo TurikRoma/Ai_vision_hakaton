@@ -8,11 +8,14 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(sa.String(320), unique=True, index=True)
-    hashed_password: Mapped[str] = mapped_column(sa.String(1024))
+    email: Mapped[str] = mapped_column(sa.String(255), unique=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(sa.Text)
+    is_active: Mapped[bool] = mapped_column(sa.Boolean, default=True)
 
-    analyses = relationship("Analysis", back_populates="owner")
-    user_refresh_tokens = relationship("UserRefreshToken", back_populates="user")
+    analyses: Mapped[list["Analysis"]] = relationship(back_populates="owner")
+    user_refresh_tokens: Mapped[list["UserRefreshToken"]] = relationship(
+        "UserRefreshToken", back_populates="user"
+    )
 
 
 class Analysis(Base):
@@ -22,7 +25,7 @@ class Analysis(Base):
     image_path: Mapped[str] = mapped_column(sa.String(1024))
     result: Mapped[dict] = mapped_column(sa.JSON, nullable=True)
     created_at: Mapped[sa.DateTime] = mapped_column(
-        sa.DateTime, default=sa.func.now()
+        sa.DateTime(timezone=True), default=sa.func.now()
     )
     owner_id: Mapped[int] = mapped_column(sa.ForeignKey("users.id"))
 
@@ -34,9 +37,9 @@ class UserRefreshToken(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     refresh_token: Mapped[str] = mapped_column(sa.String(1024), index=True)
-    expires_at: Mapped[sa.DateTime] = mapped_column(sa.DateTime)
+    expires_at: Mapped[sa.DateTime] = mapped_column(sa.DateTime(timezone=True))
     created_at: Mapped[sa.DateTime] = mapped_column(
-        sa.DateTime, default=sa.func.now()
+        sa.DateTime(timezone=True), default=sa.func.now()
     )
     revoked: Mapped[bool] = mapped_column(sa.Boolean, default=False)
     user_id: Mapped[int] = mapped_column(sa.ForeignKey("users.id"))

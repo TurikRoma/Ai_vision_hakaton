@@ -1,0 +1,58 @@
+services:
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: ai_vision_postgres
+  #   env_file: .env
+  #   ports:
+  #     - "5433:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+  #   networks:
+  #     - ai_vision_network
+
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: ai_vision_redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   command: redis-server --appendonly yes
+  #   restart: unless-stopped
+  #   networks:
+  #     - ai_vision_network
+
+  minio:
+    image: minio/minio:latest
+    container_name: ai_vision_minio
+    env_file: .env
+    ports:
+      - "9000:9000" # API
+      - "9001:9001" # Web UI Console
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    networks:
+      - ai_vision_network
+
+  # backend:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: ai_vision_backend
+  #   env_file: .env
+  #   ports:
+  #     - "8000:8000"
+  #   restart: unless-stopped
+  #   networks:
+  #     - ai_vision_network
+
+networks:
+  ai_vision_network:
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
