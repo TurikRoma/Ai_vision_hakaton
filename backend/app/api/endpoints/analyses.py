@@ -18,15 +18,17 @@ from app.api.dependencies import (
     get_current_user,
     get_db_session,
     get_optional_current_user,
+    get_pipeline,
 )
 from app.crud import analysis as crud_analysis
 from app.db import models
+from app.pipeline import ModelPipeline
 from app.schemas import analysis as schemas_analysis
 from app.services.storage import storage_service
 
 
 from ML.llm_handler import llm_response
-from app.main import get_pipeline
+
 router = APIRouter()
 
 
@@ -39,6 +41,7 @@ async def create_analysis(
     current_user: Annotated[
         models.User | None, Depends(get_optional_current_user)
     ],
+    pipeline: Annotated[ModelPipeline, Depends(get_pipeline)],
     file: UploadFile = File(...),
     recommendations: str = Form(...),
     puffiness: int = Form(...),
@@ -49,7 +52,6 @@ async def create_analysis(
 ):
 
     # Получаем пайплайн и обрабатываем изображение
-    pipeline = get_pipeline()
     if not pipeline:
         raise HTTPException(status_code=500, detail="Models not loaded")
     
