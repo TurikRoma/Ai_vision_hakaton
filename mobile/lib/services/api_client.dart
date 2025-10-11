@@ -37,7 +37,7 @@ class ApiClient {
       body: body != null ? jsonEncode(body) : null,
     );
 
-    if (authenticated && response.statusCode == 401) {
+    if (authenticated && (response.statusCode == 401 || response.statusCode == 403)) {
       final newTokens = await _refreshToken();
       if (newTokens != null) {
         headers['Authorization'] = 'Bearer ${newTokens['access_token']}';
@@ -73,7 +73,7 @@ class ApiClient {
       headers: headers,
     );
 
-    if (authenticated && response.statusCode == 401) {
+    if (authenticated && (response.statusCode == 401 || response.statusCode == 403)) {
       final newTokens = await _refreshToken();
       if (newTokens != null) {
         headers['Authorization'] = 'Bearer ${newTokens['access_token']}';

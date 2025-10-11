@@ -36,13 +36,13 @@ async def get_current_user(
             config.settings.SECRET_KEY,
             algorithms=[security.ALGORITHM],
         )
-        token_data = schemas_token.TokenPayload(**payload)
+        token_data = schemas_token.TokenData(**payload)
     except (JWTError, ValidationError):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",
         )
-    user = await crud_user.get_user(db, user_id=token_data.sub)
+    user = await crud_user.get_user_by_email(db, email=token_data.sub)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
