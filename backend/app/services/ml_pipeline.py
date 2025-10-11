@@ -27,9 +27,9 @@ class ModelPipeline:
                 'type': 'yolo'
             },
             'mobilenet_skin': {
-                'path': str(BASE_DIR / 'mobilenet_skin.pth'),
-                'num_classes': 3,
-                'class_names': ['acne', 'freckles', 'healthy']
+                'path': str(BASE_DIR / 'skin_m.pth'),
+                'num_classes': 2,
+                'class_names': ['acne', 'healthy']
             },
             'mobilenet_age': {
                 'path': str(BASE_DIR / 'mobilenet_age.pth'), 
@@ -47,7 +47,7 @@ class ModelPipeline:
                 'class_names': ['conjunctivitis', 'healthy', 'yellowness']
             },
             'mobilenet_general': {
-                'path': str(BASE_DIR / 'mobilenet_general.pth'),
+                'path': str(BASE_DIR / 'general2.pth'),
                 'num_classes': 2,
                 'class_names': ['edema', 'healthy'] 
             }
