@@ -30,7 +30,6 @@ router = APIRouter()
 @router.post(
     "/",
     response_model=schemas_analysis.Analysis,
-    dependencies=[Depends(api_key_auth)],
 )
 async def create_analysis(
     db: Annotated[AsyncSession, Depends(get_db_session)],

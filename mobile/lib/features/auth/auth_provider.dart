@@ -75,14 +75,6 @@ class AuthNotifier extends AsyncNotifier<AuthenticatedUser?> {
 
 // 5. Провайдер для данных профиля (анализов)
 final profileAnalysesProvider = FutureProvider<List<Analysis>>((ref) async {
-  // Этот провайдер будет автоматически пересчитываться, если изменится authProvider
-  final authState = ref.watch(authProvider);
-
-  // Если пользователь не аутентифицирован, возвращаем пустой список
-  if (authState.value == null) {
-    return [];
-  }
-
-  final apiClient = ref.read(apiClientProvider);
+  final apiClient = ref.watch(apiClientProvider);
   return apiClient.getAnalyses();
 });

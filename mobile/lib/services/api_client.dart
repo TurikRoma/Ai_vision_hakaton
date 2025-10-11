@@ -56,6 +56,41 @@ class ApiClient {
     return response;
   }
 
+  Future<http.Response> _get(
+    String path, {
+    bool authenticated = false,
+  }) async {
+    final headers = <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    };
+    if (authenticated) {
+      final accessToken = await _tokenStorageService.getAccessToken();
+      headers['Authorization'] = 'Bearer $accessToken';
+    }
+
+    var response = await http.get(
+      Uri.parse('$_baseUrl$path'),
+      headers: headers,
+    );
+
+    if (authenticated && response.statusCode == 401) {
+      final newTokens = await _refreshToken();
+      if (newTokens != null) {
+        headers['Authorization'] = 'Bearer ${newTokens['access_token']}';
+        response = await http.get(
+          Uri.parse('$_baseUrl$path'),
+          headers: headers,
+        );
+      } else {
+        await _tokenStorageService.deleteTokens();
+        // Here you might want to navigate the user to the login screen.
+        // This can be handled by the auth provider.
+      }
+    }
+
+    return response;
+  }
+
   Future<Map<String, dynamic>?> _refreshToken() async {
     final refreshToken = await _tokenStorageService.getRefreshToken();
     if (refreshToken == null) return null;
@@ -125,7 +160,7 @@ class ApiClient {
 
   // Example of an authenticated endpoint
   Future<List<Analysis>> getAnalyses() async {
-    final response = await _post('/analyses/', authenticated: true);
+    final response = await _get('/analyses/', authenticated: true);
     if (response.statusCode == 200) {
       final List<dynamic> analysesJson = jsonDecode(response.body);
       return analysesJson.map((json) => Analysis.fromJson(json)).toList();
@@ -140,8 +175,6 @@ class ApiClient {
   ) async {
     final uri = Uri.parse('$_baseUrl/analyses/');
     final request = http.MultipartRequest('POST', uri);
-
-    request.headers['X-API-Key'] = _internalApiKey;
 
     final accessToken = await _tokenStorageService.getAccessToken();
     if (accessToken != null) {
