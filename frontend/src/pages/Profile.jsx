@@ -105,21 +105,30 @@ export default function Profile() {
                 key={item.id}
                 className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden"
               >
-                {/* Image Placeholder */}
-                <div className="h-48 w-full bg-slate-200 flex items-center justify-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-12 w-12 text-slate-400"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
+                {item.image_path ? (
+                  <img
+                    src={item.image_path}
+                    alt={`Analysis from ${new Date(
+                      item.created_at
+                    ).toLocaleDateString()}`}
+                    className="h-48 w-full object-cover bg-slate-100"
+                  />
+                ) : (
+                  <div className="h-48 w-full bg-slate-200 flex items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-12 w-12 text-slate-400"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                )}
 
                 <div className="p-4 space-y-2">
                   <div className="text-sm text-slate-500">

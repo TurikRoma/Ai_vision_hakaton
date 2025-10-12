@@ -4,6 +4,7 @@ from typing import Annotated
 import tempfile
 import shutil
 import os
+import logging
 
 from fastapi import (
     APIRouter,
@@ -33,6 +34,7 @@ from app.services.storage import storage_service
 from app.llm_handler import llm_response
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post(
@@ -94,7 +96,7 @@ async def process_analysis(
 async def create_analysis(
     db: Annotated[AsyncSession, Depends(get_db_session)],
     current_user: Annotated[
-        models.User | None, Depends(get_optional_current_user)
+        models.User | None, Depends(get_current_user)
     ],
     file: UploadFile = File(...),
     recommendations: str = Form(...),
@@ -103,41 +105,53 @@ async def create_analysis(
     fatigue: int = Form(...),
     acne: int = Form(...),
     skin_condition: str = Form(...),
-    eyes_health: int = Form(...),
-    skin_health: int = Form(...),
+    eyes_health: int | None = Form(None),
+    skin_health: int | None = Form(None),
 ):
     """
     Create a new analysis and save it to the database.
     """
-    file_url = await storage_service.upload_file(file)
+    logger.info("Received request to CREATE analysis and UPLOAD image.")
+    object_name = await storage_service.upload_file(file)
 
     owner_id = current_user.id if current_user else None
     analysis_in = schemas_analysis.AnalysisCreate(
-        image_path=file_url,
+        image_path=object_name,
         owner_id=owner_id,
         recommendations=recommendations,
         puffiness=puffiness,
         dark_circles=dark_circles,
         fatigue=fatigue,
         acne=acne,
-        eyes_health=eyes_health,
-        skin_health=skin_health,
+        eyes_health=eyes_health or 0,
+        skin_health=skin_health or 0,
         skin_condition=skin_condition,
     )
 
     analysis = await crud_analysis.create_analysis(db, analysis_in=analysis_in)
+    if analysis.image_path:
+        analysis.image_path = await storage_service.get_presigned_url(analysis.image_path)
     return analysis
 
 
 @router.get("/", response_model=list[schemas_analysis.Analysis])
 async def read_analyses(
     db: Annotated[AsyncSession, Depends(get_db_session)],
-    current_user: Annotated[models.User, Depends(get_current_user)],
+    current_user: Annotated[
+        models.User | None, Depends(get_optional_current_user)
+    ],
 ):
     """
     Retrieve all analyses for the current user.
     """
+    if not current_user:
+        return []
     analyses = await crud_analysis.get_user_analyses(db, user_id=current_user.id)
+    for analysis in analyses:
+        if analysis.image_path:
+            analysis.image_path = await storage_service.get_presigned_url(
+                analysis.image_path
+            )
     return analyses
 
 
@@ -160,6 +174,8 @@ async def read_analysis(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this analysis",
         )
+    if analysis.image_path:
+        analysis.image_path = await storage_service.get_presigned_url(analysis.image_path)
     return analysis
 
 
@@ -190,4 +206,6 @@ async def assign_analysis_to_user(
     await db.commit()
     await db.refresh(analysis)
 
+    if analysis.image_path:
+        analysis.image_path = await storage_service.get_presigned_url(analysis.image_path)
     return analysis

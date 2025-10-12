@@ -21,6 +21,7 @@ class ResultScreen extends ConsumerStatefulWidget {
 
 class _ResultScreenState extends ConsumerState<ResultScreen> {
   Future<Analysis>? _analysisFuture;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -32,16 +33,8 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
   void _runAnalysis() {
     final apiClient = ref.read(apiClientProvider);
-    final initialData = {
-      'recommendations': 'generating...',
-      'puffiness': '0',
-      'dark_circles': '0',
-      'fatigue': '0',
-      'acne': '0',
-      'skin_condition': 'generating...',
-    };
     setState(() {
-      _analysisFuture = apiClient.createAnalysis(widget.imagePath, initialData);
+      _analysisFuture = apiClient.processImage(widget.imagePath);
     });
   }
 
@@ -263,14 +256,67 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: () {
-                      if (widget.onBack != null) {
-                        widget.onBack!();
-                      } else {
-                        // Возвращаемся на главный экран
-                        Navigator.of(context).popUntil((route) => route.isFirst);
-                      }
-                    },
+                    onPressed: _isSaving
+                        ? null
+                        : () async {
+                            final authState = ref.read(authProvider);
+                            final analysisData = snapshot.data;
+
+                            if (analysisData == null) return;
+
+                            setState(() {
+                              _isSaving = true;
+                            });
+
+                            try {
+                              if (authState.hasValue && authState.value != null) {
+                                await ref.read(apiClientProvider).createAnalysis(
+                                    widget.imagePath, analysisData);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Анализ успешно сохранен!')),
+                                );
+                                if (widget.onBack != null) {
+                                  widget.onBack!();
+                                } else {
+                                  Navigator.of(context)
+                                      .popUntil((route) => route.isFirst);
+                                }
+                              } else {
+                                final result = await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                      builder: (context) => const LoginScreen()),
+                                );
+                                if (result == true && mounted) {
+                                  await ref.read(apiClientProvider).createAnalysis(
+                                      widget.imagePath, analysisData);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content:
+                                            Text('Анализ успешно сохранен!')),
+                                  );
+                                  if (widget.onBack != null) {
+                                    widget.onBack!();
+                                  } else {
+                                    Navigator.of(context)
+                                        .popUntil((route) => route.isFirst);
+                                  }
+                                }
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content:
+                                        Text('Ошибка сохранения: ${e.toString()}')),
+                              );
+                            } finally {
+                              if (mounted) {
+                                setState(() {
+                                  _isSaving = false;
+                                });
+                              }
+                            }
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).primaryColor,
                       foregroundColor: Colors.white,
@@ -279,13 +325,18 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: Text(
-                      'Сохранить',
-                      style: GoogleFonts.manrope(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    child: _isSaving
+                        ? const CircularProgressIndicator(
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          )
+                        : Text(
+                            'Сохранить',
+                            style: GoogleFonts.manrope(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                   ),
                 ],
               ),

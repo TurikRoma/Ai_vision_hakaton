@@ -1,56 +1,96 @@
 import uuid
-from pathlib import Path
-import io
+from datetime import timedelta
+from urllib.parse import urlparse, urlunparse
+import logging
+import os
 
 from fastapi import UploadFile
 from minio import Minio
+from minio.error import S3Error
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class StorageService:
     def __init__(self):
+        logger.info("Initializing StorageService...")
         self.client = Minio(
-            endpoint=settings.MINIO_ENDPOINT,
+            settings.MINIO_ENDPOINT,
             access_key=settings.MINIO_ACCESS_KEY,
             secret_key=settings.MINIO_SECRET_KEY,
             secure=settings.MINIO_USE_HTTPS,
         )
+
+        if settings.MINIO_PUBLIC_URL:
+            public_endpoint_parts = urlparse(settings.MINIO_PUBLIC_URL)
+            self.public_client = Minio(
+                public_endpoint_parts.netloc,
+                access_key=settings.MINIO_ACCESS_KEY,
+                secret_key=settings.MINIO_SECRET_KEY,
+                secure=public_endpoint_parts.scheme == 'https',
+            )
+        else:
+            self.public_client = self.client
+
         self.bucket_name = settings.MINIO_BUCKET
         self._ensure_bucket_exists()
 
     def _ensure_bucket_exists(self):
         found = self.client.bucket_exists(self.bucket_name)
         if not found:
-            self.client.make_bucket(self.bucket_name)
+            try:
+                self.client.make_bucket(self.bucket_name)
+            except S3Error as exc:
+                logger.error(f"Error creating bucket: {exc}")
+                raise
+
+    async def get_presigned_url(self, object_name: str) -> str | None:
+        """Generate a presigned URL to share an object."""
+        try:
+            # Handle cases where the object_name might be a full URL from old data
+            try:
+                parsed_url = urlparse(object_name)
+                if parsed_url.scheme and parsed_url.netloc:
+                    actual_object_name = os.path.basename(parsed_url.path)
+                else:
+                    actual_object_name = object_name
+            except Exception:
+                actual_object_name = object_name
+
+            presigned_url = self.public_client.presigned_get_object(
+                self.bucket_name,
+                actual_object_name,
+                expires=timedelta(days=7),
+            )
+            return presigned_url
+
+        except S3Error as exc:
+            logger.error(f"Error generating presigned URL: {exc}")
+            return None
 
     async def upload_file(self, file: UploadFile) -> str:
-        file_extension = Path(file.filename).suffix
-        file_name = f"{uuid.uuid4()}{file_extension}"
-        file_content = await file.read()
-        file_size = len(file_content)
-
-        self.client.put_object(
-            bucket_name=self.bucket_name,
-            object_name=file_name,
-            data=io.BytesIO(file_content),
-            length=file_size,
-            content_type=file.content_type,
+        """Upload a file to an S3 object."""
+        file_name = f"{uuid.uuid4()}.{file.filename.split('.')[-1]}"
+        logger.info(
+            f"Attempting to upload file. Original name: '{file.filename}', "
+            f"new name: '{file_name}' to bucket '{self.bucket_name}'."
         )
-
-        if settings.MINIO_PUBLIC_URL:
-            # Use the public URL for generating the file link when available (for sharing)
-            base_url = settings.MINIO_PUBLIC_URL.rstrip('/')
-            url = f"{base_url}/{self.bucket_name}/{file_name}"
-        else:
-            # Fallback to local endpoint for development
-            # The backend uses 'minio:9000' to talk to the service inside docker.
-            # We replace it with 'localhost' so the URL is accessible from the host browser.
-            endpoint = settings.MINIO_ENDPOINT.replace("minio", "localhost")
-            protocol = "https" if settings.MINIO_USE_HTTPS else "http"
-            url = f"{protocol}://{endpoint}/{self.bucket_name}/{file_name}"
-
-        return url
+        try:
+            file.file.seek(0)
+            self.client.put_object(
+                self.bucket_name,
+                file_name,
+                file.file,
+                length=-1,
+                part_size=10 * 1024 * 1024,
+                content_type=file.content_type,
+            )
+        except S3Error as exc:
+            logger.error(f"Error uploading to MinIO: {exc}")
+            raise
+        return file_name
 
 
 storage_service = StorageService()

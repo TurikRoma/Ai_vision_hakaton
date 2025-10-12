@@ -93,22 +93,58 @@ class ProfileScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Expanded(
-                                  child: Container(
-                                    color: Colors.grey[200],
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.image_outlined,
-                                        color: Colors.grey[400],
-                                        size: 40,
-                                      ),
-                                    ),
-                                  ),
+                                  child: (analysis.imagePath != null &&
+                                          analysis.imagePath!.isNotEmpty)
+                                      ? Image.network(
+                                          analysis.imagePath!,
+                                          fit: BoxFit.cover,
+                                          loadingBuilder: (BuildContext context,
+                                              Widget child,
+                                              ImageChunkEvent? loadingProgress) {
+                                            if (loadingProgress == null) {
+                                              return child;
+                                            }
+                                            return Center(
+                                              child: CircularProgressIndicator(
+                                                value: loadingProgress
+                                                            .expectedTotalBytes !=
+                                                        null
+                                                    ? loadingProgress
+                                                            .cumulativeBytesLoaded /
+                                                        loadingProgress
+                                                            .expectedTotalBytes!
+                                                    : null,
+                                              ),
+                                            );
+                                          },
+                                          errorBuilder: (BuildContext context,
+                                              Object exception,
+                                              StackTrace? stackTrace) {
+                                            return Icon(
+                                              Icons.image_not_supported_outlined,
+                                              color: Colors.grey[400],
+                                              size: 40,
+                                            );
+                                          },
+                                        )
+                                      : Container(
+                                          color: Colors.grey[200],
+                                          child: Center(
+                                            child: Icon(
+                                              Icons.image_outlined,
+                                              color: Colors.grey[400],
+                                              size: 40,
+                                            ),
+                                          ),
+                                        ),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.all(8.0),
                                   child: Text(
-                                    DateFormat('dd.MM.yyyy HH:mm')
-                                        .format(analysis.createdAt),
+                                    analysis.createdAt != null
+                                        ? DateFormat('dd.MM.yyyy HH:mm')
+                                            .format(analysis.createdAt!)
+                                        : '',
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,

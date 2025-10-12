@@ -585,7 +585,7 @@ export default function Scan() {
                   <button
                     onClick={handleSave}
                     disabled={isSaving || saveSuccess}
-                    className="rounded-xl bg-blue-600 px-8 py-3 text-white shadow hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="rounded-xl bg-primary px-8 py-3 text-white shadow hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {isSaving
                       ? "Сохранение..."
@@ -646,14 +646,15 @@ function ApexChart({ type, options = {}, series = [], height = 280 }) {
   useEffect(() => {
     if (!ref.current) return;
     const chart = new ApexCharts(ref.current, {
+      ...options,
       chart: {
         type,
         height,
         animations: { enabled: true },
         toolbar: { show: false },
+        ...options.chart,
       },
       series,
-      ...options,
     });
     chart.render();
     return () => {
@@ -742,10 +743,9 @@ function makeComparisonData(key, yourValue) {
   // Простейшая рандомизация мировых значений
   const rand = (a, b) => Math.round(a + Math.random() * (b - a));
   const worldAvg = m.goodHigh ? rand(55, 72) : rand(15, 35);
-  const top25 = m.goodHigh ? rand(78, 90) : rand(5, 15);
   return {
-    categories: ["Вы", "Средний", "Топ 25%"],
-    values: [yourValue, worldAvg, top25],
+    categories: ["Вы", "Средний"],
+    values: [yourValue, worldAvg],
   };
 }
 
@@ -851,11 +851,22 @@ function ParamInsight({ paramKey, value, comparison }) {
             options={{
               xaxis: { categories: comparison.categories },
               plotOptions: {
-                bar: { borderRadius: 6, horizontal: false, columnWidth: "45%" },
+                bar: {
+                  borderRadius: 6,
+                  horizontal: false,
+                  columnWidth: "45%",
+                  distributed: true,
+                },
               },
-              colors: ["#10b981"],
+              colors: ["#22d3ee", "#10b981"],
               chart: { toolbar: { show: false } },
               grid: { strokeDashArray: 3 },
+              legend: { show: false },
+              yaxis: { max: 100 },
+              dataLabels: {
+                enabled: true,
+                formatter: (val) => `${val}%`,
+              },
             }}
           />
         )}

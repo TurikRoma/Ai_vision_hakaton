@@ -91,6 +91,64 @@ class ApiClient {
     return response;
   }
 
+  Future<http.StreamedResponse> _multipartPost(
+    String path, {
+    bool authenticated = false,
+    Map<String, String>? fields,
+    String? filePath,
+    String fileFieldName = 'file',
+  }) async {
+    final uri = Uri.parse('$_baseUrl$path');
+    final request = http.MultipartRequest('POST', uri);
+
+    if (authenticated) {
+      final accessToken = await _tokenStorageService.getAccessToken();
+      if (accessToken != null) {
+        request.headers['Authorization'] = 'Bearer $accessToken';
+      }
+    }
+
+    if (fields != null) {
+      request.fields.addAll(fields);
+    }
+
+    if (filePath != null) {
+      final file = await http.MultipartFile.fromPath(
+        fileFieldName,
+        filePath,
+        filename: p.basename(filePath),
+      );
+      request.files.add(file);
+    }
+
+    var response = await request.send();
+
+    if (authenticated && (response.statusCode == 401 || response.statusCode == 403)) {
+      final newTokens = await _refreshToken();
+      if (newTokens != null) {
+        // Resend the request with the new token
+        final newRequest = http.MultipartRequest('POST', uri);
+        newRequest.headers['Authorization'] = 'Bearer ${newTokens['access_token']}';
+        if (fields != null) {
+          newRequest.fields.addAll(fields);
+        }
+        if (filePath != null) {
+          final file = await http.MultipartFile.fromPath(
+            fileFieldName,
+            filePath,
+            filename: p.basename(filePath),
+          );
+          newRequest.files.add(file);
+        }
+        response = await newRequest.send();
+      } else {
+        await _tokenStorageService.deleteTokens();
+      }
+    }
+
+    return response;
+  }
+
   Future<Map<String, dynamic>?> _refreshToken() async {
     final refreshToken = await _tokenStorageService.getRefreshToken();
     if (refreshToken == null) return null;
@@ -169,29 +227,42 @@ class ApiClient {
     }
   }
 
+  Future<Analysis> processImage(String filePath) async {
+    final response = await _multipartPost(
+      '/analyses/process',
+      filePath: filePath,
+    );
+
+    if (response.statusCode == 200) {
+      final responseBody = await response.stream.bytesToString();
+      return Analysis.fromJson(jsonDecode(responseBody));
+    } else {
+      final responseBody = await response.stream.bytesToString();
+      throw Exception('Failed to process image: $responseBody');
+    }
+  }
+
   Future<Analysis> createAnalysis(
     String filePath,
-    Map<String, String> analysisData,
+    Analysis analysisData,
   ) async {
-    final uri = Uri.parse('$_baseUrl/analyses/');
-    final request = http.MultipartRequest('POST', uri);
+    final fields = {
+      'recommendations': analysisData.recommendations ?? '',
+      'puffiness': analysisData.puffiness?.toString() ?? '0',
+      'dark_circles': analysisData.darkCircles?.toString() ?? '0',
+      'fatigue': analysisData.fatigue?.toString() ?? '0',
+      'acne': analysisData.acne?.toString() ?? '0',
+      'skin_condition': analysisData.skinCondition ?? '',
+      'eyes_health': analysisData.eyesHealth?.toString() ?? '0',
+      'skin_health': analysisData.skinHealth?.toString() ?? '0',
+    };
 
-    final accessToken = await _tokenStorageService.getAccessToken();
-    if (accessToken != null) {
-      request.headers['Authorization'] = 'Bearer $accessToken';
-    }
-
-    // Add text fields
-    request.fields.addAll(analysisData);
-
-    final file = await http.MultipartFile.fromPath(
-      'file',
-      filePath,
-      filename: p.basename(filePath),
+    final response = await _multipartPost(
+      '/analyses/',
+      authenticated: true,
+      fields: fields,
+      filePath: filePath,
     );
-    request.files.add(file);
-
-    final response = await request.send();
 
     if (response.statusCode == 200) {
       final responseBody = await response.stream.bytesToString();

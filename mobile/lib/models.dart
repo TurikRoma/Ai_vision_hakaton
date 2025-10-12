@@ -5,9 +5,9 @@ class AuthenticatedUser {
 }
 
 class Analysis {
-  final int id;
-  final String imagePath;
-  final DateTime createdAt;
+  final int? id;
+  final String? imagePath;
+  final DateTime? createdAt;
   final String? recommendations;
   final int? puffiness;
   final int? darkCircles;
@@ -35,15 +35,17 @@ class Analysis {
     return Analysis(
       id: json['id'],
       imagePath: json['image_path'],
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
       recommendations: json['recommendations'],
-      puffiness: json['puffiness'],
-      darkCircles: json['dark_circles'],
-      fatigue: json['fatigue'],
-      acne: json['acne'],
+      puffiness: json['puffiness'] ?? 0,
+      darkCircles: json['dark_circles'] ?? 0,
+      fatigue: json['fatigue'] ?? 0,
+      acne: json['acne'] ?? 0,
       skinCondition: json['skin_condition'],
-      eyesHealth: json['eyes_health'],
-      skinHealth: json['skin_health'],
+      eyesHealth: json['eyes_health'] ?? 0,
+      skinHealth: json['skin_health'] ?? 0,
     );
   }
 }
