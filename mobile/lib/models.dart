@@ -48,4 +48,20 @@ class Analysis {
       skinHealth: json['skin_health'] ?? 0,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'image_path': imagePath,
+      'created_at': createdAt?.toIso8601String(),
+      'recommendations': recommendations,
+      'puffiness': puffiness,
+      'dark_circles': darkCircles,
+      'fatigue': fatigue,
+      'acne': acne,
+      'skin_condition': skinCondition,
+      'eyes_health': eyesHealth,
+      'skin_health': skinHealth,
+    };
+  }
 }

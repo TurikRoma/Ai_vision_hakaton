@@ -1,3 +1,4 @@
+#123
 import logging
 from logging.config import dictConfig
 
@@ -13,12 +14,12 @@ LOGGING_CONFIG = {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "default",
-            "level": "INFO",
+            "level": "DEBUG",
         },
     },
     "root": {
         "handlers": ["console"],
-        "level": "INFO",
+        "level": "DEBUG",
     },
     "loggers": {
         "uvicorn.error": {
@@ -28,7 +29,7 @@ LOGGING_CONFIG = {
         },
         "uvicorn.access": {
             "handlers": ["console"],
-            "level": "INFO",
+            "level": "DEBUG",
             "propagate": False,
         },
     },

@@ -15,8 +15,10 @@ export default function Profile() {
       try {
         setLoading(true);
         const data = await api.fetchHistory();
+        console.log(data);
         setHistory(data);
       } catch (err) {
+        console.log("er");
         setError("Не удалось загрузить историю анализов.");
         console.error(err);
       } finally {

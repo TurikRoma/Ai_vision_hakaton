@@ -149,9 +149,15 @@ async def read_analyses(
     analyses = await crud_analysis.get_user_analyses(db, user_id=current_user.id)
     for analysis in analyses:
         if analysis.image_path:
-            analysis.image_path = await storage_service.get_presigned_url(
-                analysis.image_path
-            )
+            try:
+                analysis.image_path = await storage_service.get_presigned_url(
+                    analysis.image_path
+                )
+            except Exception as e:
+                logger.error(
+                    f"Failed to get presigned URL for image {analysis.image_path}: {e}"
+                )
+                analysis.image_path = None
     return analyses
 
 

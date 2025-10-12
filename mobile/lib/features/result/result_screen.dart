@@ -8,6 +8,7 @@ import 'package:markdown_widget/markdown_widget.dart';
 import 'package:mobile/features/auth/auth_provider.dart';
 import 'package:mobile/features/auth/login_screen.dart';
 import 'package:mobile/models.dart';
+import 'package:mobile/services/scan_history_service.dart';
 
 class ResultScreen extends ConsumerStatefulWidget {
   final String imagePath;
@@ -22,6 +23,7 @@ class ResultScreen extends ConsumerStatefulWidget {
 class _ResultScreenState extends ConsumerState<ResultScreen> {
   Future<Analysis>? _analysisFuture;
   bool _isSaving = false;
+  final ScanHistoryService _scanHistoryService = ScanHistoryService();
 
   @override
   void initState() {
@@ -33,9 +35,12 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
   void _runAnalysis() {
     final apiClient = ref.read(apiClientProvider);
-    setState(() {
-      _analysisFuture = apiClient.processImage(widget.imagePath);
+    _analysisFuture = apiClient.processImage(widget.imagePath);
+    _analysisFuture!.then((analysis) {
+      // Сохраняем результат в локальную историю
+      _scanHistoryService.addScan(DateTime.now(), analysis);
     });
+    setState(() {});
   }
 
   // "Негативные" метрики: чем меньше, тем лучше

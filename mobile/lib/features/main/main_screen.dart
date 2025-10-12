@@ -13,6 +13,7 @@ import 'package:mobile/features/profile/profile_screen.dart';
 import 'package:mobile/features/result/result_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile/features/calendar/calendar_screen.dart';
+import 'package:mobile/services/scan_history_service.dart';
 
 enum AppScreen { home, processing, result }
 
@@ -26,6 +27,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   AppScreen _currentScreen = AppScreen.home;
   String? _imagePath;
+  final ScanHistoryService _scanHistoryService = ScanHistoryService();
 
   void _navigateTo(AppScreen screen, {String? imagePath}) {
     setState(() {
@@ -110,18 +112,21 @@ class _HomeScreenBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const _TopContent(),
-            const SizedBox(height: 24),
-            const _CenterImage(),
-            const SizedBox(height: 24),
-            _UploadButton(onPressed: onUploadPressed),
-            const Spacer(),
-          ],
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 24),
+              const _TopContent(),
+              const SizedBox(height: 40),
+              const _WarningMessages(),
+              const SizedBox(height: 40),
+              _UploadButton(onPressed: onUploadPressed),
+              const SizedBox(height: 80),
+            ],
+          ),
         ),
       ),
     );
@@ -138,7 +143,7 @@ class _TopContent extends StatelessWidget {
       children: [
         // Replace with actual logo if available
         Text(
-          'hero vision',
+          'VitaScan',
           style: GoogleFonts.manrope(
             fontSize: 16,
             fontWeight: FontWeight.w700,
@@ -156,16 +161,96 @@ class _TopContent extends StatelessWidget {
             height: 1.2,
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Технология искусственного интеллекта анализирует черты лица, чтобы предоставить информацию о здоровье кожи, уровне стресса и общем самочувствии',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.manrope(
-            fontSize: 14,
-            color: Colors.grey[600],
+      ],
+    );
+  }
+}
+
+class Warning {
+  final String title;
+  final String description;
+
+  const Warning({required this.title, required this.description});
+}
+
+const List<Warning> _warnings = [
+  Warning(
+    title: 'Снимите очки',
+    description: 'Уберите аксессуары, которые закрывают часть лица.',
+  ),
+  Warning(
+    title: 'Без макияжа',
+    description: 'Лёгкий уход — ок. Тональный и плотный макияж — нежелателен.',
+  ),
+  Warning(
+    title: 'Не медицинский совет',
+    description: 'Результаты носят ознакомительный характер и не заменяют консультацию врача.',
+  ),
+];
+
+class _WarningMessages extends StatelessWidget {
+  const _WarningMessages();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: _WarningCard(warning: _warnings[0])),
+              const SizedBox(width: 16),
+              Expanded(child: _WarningCard(warning: _warnings[1])),
+            ],
           ),
         ),
+        const SizedBox(height: 16),
+        _WarningCard(warning: _warnings[2]),
       ],
+    );
+  }
+}
+
+class _WarningCard extends StatelessWidget {
+  final Warning warning;
+
+  const _WarningCard({required this.warning});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            warning.title,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.manrope(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            warning.description,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.manrope(
+              fontSize: 12,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -204,6 +289,7 @@ class _UploadButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         padding: const EdgeInsets.symmetric(vertical: 16),
+        minimumSize: const Size.fromHeight(52),
       ),
       child: Text(
         'Загрузить фотографию',
