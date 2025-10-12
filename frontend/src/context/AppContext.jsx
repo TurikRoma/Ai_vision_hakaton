@@ -26,7 +26,14 @@ function reducer(state, action) {
     case "LOGIN":
       return { ...state, isAuthenticated: true };
     case "LOGOUT":
-      return { ...state, isAuthenticated: false };
+      return {
+        ...state,
+        isAuthenticated: false,
+        user: null,
+        imageDataUrl: null,
+        analysis: null,
+        history: [],
+      };
     case "SET_IMAGE":
       return { ...state, imageDataUrl: action.payload };
     case "SET_ANALYSIS":

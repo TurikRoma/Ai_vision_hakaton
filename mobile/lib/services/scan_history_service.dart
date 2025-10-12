@@ -87,4 +87,8 @@ class ScanHistoryService {
     
     return streak;
   }
+
+  Future<void> clearHistory() async {
+    await _prefs.remove(_key);
+  }
 }

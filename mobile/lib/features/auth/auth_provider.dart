@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decode/jwt_decode.dart';
 import 'package:mobile/models.dart';
 import 'package:mobile/services/api_client.dart';
+import 'package:mobile/services/providers.dart';
 import 'package:mobile/services/token_storage_service.dart';
 
 // 1. Провайдер для FlutterSecureStorage
@@ -68,7 +69,10 @@ class AuthNotifier extends AsyncNotifier<AuthenticatedUser?> {
 
   Future<void> logout() async {
     final apiClient = ref.read(apiClientProvider);
+    final scanHistoryService = ref.read(scanHistoryServiceProvider);
     await apiClient.logout();
+    await scanHistoryService.clearHistory();
+    ref.invalidate(profileAnalysesProvider);
     state = const AsyncValue.data(null);
   }
 }
