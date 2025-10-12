@@ -3,6 +3,69 @@ import MetricCard from "../components/MetricCard";
 import ProgressBar from "../components/ProgressBar";
 import ApexChart from "../components/charts/ApexChart";
 import { useApp } from "../context/AppContext";
+import { Accordion } from "../components/Accordion";
+
+const detailedReport = {
+  overallAssessment: `У тебя наблюдается специфическое сочетание факторов, которое требует внимания. Учитывая состояние кожи, периорбитальную зону и общее здоровье, есть несколько ключевых моментов, которые я хотел бы поделиться с тобой.`,
+  fatigueLevel: `Твоя системная усталость не выражена, так как основной показатель - отсутствие темных кругов под глазами указывает на хорошее состояние.`,
+  differentialAnalysis: [
+    {
+      title: "Кожный покров",
+      content: `несмотря на то, что кожа твоего лица определяется как "baby", присутствие акне с высокой уверенностью (87.5%) требует внимания. Это нехарактерно для этой возрастной категории, поэтому следует выяснить причину возникновения.`,
+    },
+    {
+      title: "Периорбитальная зона",
+      content: `твоя периорбитальная зона демонстрирует высокую степень отечности (98.1%), что может сигнализировать о системных проблемах со здоровьем или возможных алергенных реакциях.`,
+    },
+    {
+      title: "Офтальмологический статус",
+      content: `наличие желтушности глаз (52.1%) тревожный сигнал и требует немедленной консультации медицинского специалиста. Это может быть связано с проблемами печени или другими серьезными состояниями.`,
+    },
+    {
+      title: "Уровень стресса",
+      content: `несмотря на низкую усталость, другие параметры, такие как отечность и проблема с глазами, возможно, указывают на стрессовое состояние организма.`,
+    },
+    {
+      title: "Баланс здоровья",
+      content: `в целом, балансирует между различными проявлениями, однако отечность и желтушность требуют особого внимания.`,
+    },
+    {
+      title: "Системные взаимосвязи",
+      content: `сочетание высокой отечности и желтушности глаз, вместе с акне, может свидетельствовать о системных проблемах, связанных с работой эндокринной или пищеварительной системы.`,
+    },
+  ],
+  recommendations: {
+    urgent: [
+      `**Консультация врача** - незамедлительно следует посетить врача, чтобы исключить серьезные системные заболевания или нарушения функций печени из-за желтушности глаз.`,
+    ],
+    lifestyle: [
+      `**Диета** - обрати внимание на баланс белков и углеводов в рационе, возможно исключение раздражающих компонентов, таких как сахар или молочные продукты.`,
+      `**Увлажнение** - употребляй достаточное количество жидкости, чтобы улучшить состояние кожи и снизить отечность.`,
+    ],
+    care: [
+      `**Уход за кожей** - идеально подойдет нежное очищение без агрессивных компонентов, чтобы не усугублять акне.`,
+      `**Увлажнение кожи** - используй легкие увлажняющие или успока-ивающие кремы для лица, чтобы снять раздражение и улучшить общее состояние кожи.`,
+    ],
+  },
+  whenToSeeDoctor: `Тебе необходимо обратиться к специалисту, если отечность и желтушность глаз не уменьшатся в течение пары дней. Появление дополнительных симптомов, таких как боль или ухудшение зрения, также являются триггерами для визита к офтальмологу или терапевту.`,
+};
+
+const BoldableText = ({ text }) => {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return (
+    <span>
+      {parts.map((part, i) =>
+        part.startsWith("**") && part.endsWith("**") ? (
+          <strong key={i} className="font-semibold text-slate-800">
+            {part.slice(2, -2)}
+          </strong>
+        ) : (
+          part
+        )
+      )}
+    </span>
+  );
+};
 
 export default function Results() {
   const { state } = useApp();
@@ -121,8 +184,12 @@ export default function Results() {
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="text-sm font-medium text-slate-900 mb-2">Итог</div>
-            <p className="text-sm text-slate-700">{summary}</p>
+            <div className="text-sm font-medium text-slate-900 mb-2">
+              Общая оценка
+            </div>
+            <p className="text-sm text-slate-700">
+              {detailedReport.overallAssessment}
+            </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -205,6 +272,19 @@ export default function Results() {
                 }}
               />
             </div>
+          </section>
+
+          <section>
+            <Accordion title="Детальный дифференциальный анализ" defaultOpen>
+              <div className="space-y-4">
+                {detailedReport.differentialAnalysis.map((item, i) => (
+                  <div key={i}>
+                    <h4 className="font-semibold">{item.title}</h4>
+                    <p>{item.content}</p>
+                  </div>
+                ))}
+              </div>
+            </Accordion>
           </section>
 
           {/* Top risk bar */}
@@ -301,11 +381,51 @@ export default function Results() {
             <h2 className="text-base font-semibold text-slate-900 mb-4">
               Рекомендации
             </h2>
-            <ul className="list-disc pl-5 text-sm text-slate-700 space-y-2">
-              {recommendations.map((r, i) => (
-                <li key={i}>{r}</li>
-              ))}
-            </ul>
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-slate-900 mb-1">
+                  Срочные меры
+                </h3>
+                <ul className="list-disc pl-5 space-y-1 text-slate-700">
+                  {detailedReport.recommendations.urgent.map((r, i) => (
+                    <li key={i}>
+                      <BoldableText text={r} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900 mb-1">
+                  Оптимизация образа жизни
+                </h3>
+                <ul className="list-disc pl-5 space-y-1 text-slate-700">
+                  {detailedReport.recommendations.lifestyle.map((r, i) => (
+                    <li key={i}>
+                      <BoldableText text={r} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900 mb-1">
+                  Профилактика и уход
+                </h3>
+                <ul className="list-disc pl-5 space-y-1 text-slate-700">
+                  {detailedReport.recommendations.care.map((r, i) => (
+                    <li key={i}>
+                      <BoldableText text={r} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-amber-300 bg-amber-50 p-5 shadow-sm">
+            <h2 className="text-base font-semibold text-amber-900 mb-2">
+              Когда обратиться к специалисту
+            </h2>
+            <p className="text-amber-800">{detailedReport.whenToSeeDoctor}</p>
           </section>
         </div>
       </div>

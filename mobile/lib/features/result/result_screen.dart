@@ -9,6 +9,7 @@ import 'package:mobile/features/auth/auth_provider.dart';
 import 'package:mobile/features/auth/login_screen.dart';
 import 'package:mobile/models.dart';
 import 'package:mobile/services/scan_history_service.dart';
+import 'package:mobile/services/providers.dart';
 
 class ResultScreen extends ConsumerStatefulWidget {
   final String imagePath;
@@ -23,8 +24,7 @@ class ResultScreen extends ConsumerStatefulWidget {
 class _ResultScreenState extends ConsumerState<ResultScreen> {
   Future<Analysis>? _analysisFuture;
   bool _isSaving = false;
-  final ScanHistoryService _scanHistoryService = ScanHistoryService();
-
+  
   @override
   void initState() {
     super.initState();
@@ -33,12 +33,32 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     });
   }
 
-  void _runAnalysis() {
+  Future<void> _runAnalysis() async {
     final apiClient = ref.read(apiClientProvider);
+    
     _analysisFuture = apiClient.processImage(widget.imagePath);
-    _analysisFuture!.then((analysis) {
-      // Сохраняем результат в локальную историю
-      _scanHistoryService.addScan(DateTime.now(), analysis);
+    
+    _analysisFuture!.then((analysis) async {
+      final scanHistoryService = await ref.read(scanHistoryServiceProvider.future);
+      // Создаем копию анализа, но без рекомендаций
+      final analysisForStreak = Analysis(
+        id: analysis.id,
+        imagePath: analysis.imagePath,
+        createdAt: analysis.createdAt,
+        recommendations: null, // Устанавливаем рекомендации в null
+        puffiness: analysis.puffiness,
+        darkCircles: analysis.darkCircles,
+        fatigue: analysis.fatigue,
+        acne: analysis.acne,
+        skinCondition: analysis.skinCondition,
+        eyesHealth: analysis.eyesHealth,
+        skinHealth: analysis.skinHealth,
+      );
+      // Сохраняем результат в локальную историю для обновления стрика
+      await scanHistoryService.addScan(DateTime.now(), analysisForStreak);
+    }).catchError((error) {
+      // Можно добавить обработку ошибок, если нужно
+      debugPrint("Error running analysis: $error");
     });
     setState(() {});
   }
@@ -268,6 +288,10 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                             final analysisData = snapshot.data;
 
                             if (analysisData == null) return;
+
+                            // Сохраняем полный анализ с рекомендациями локально
+                            final scanHistoryService = await ref.read(scanHistoryServiceProvider.future);
+                            await scanHistoryService.addScan(DateTime.now(), analysisData);
 
                             setState(() {
                               _isSaving = true;

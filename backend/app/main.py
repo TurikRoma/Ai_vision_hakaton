@@ -33,6 +33,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "https://997d9a722301.ngrok-free.app",
+        "https://ai-vision-hakaton.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],

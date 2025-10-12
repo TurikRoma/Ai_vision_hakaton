@@ -42,33 +42,37 @@ class StorageService:
         if not found:
             try:
                 self.client.make_bucket(self.bucket_name)
+                logger.info(f"Bucket '{self.bucket_name}' created successfully.")
             except S3Error as exc:
                 logger.error(f"Error creating bucket: {exc}")
                 raise
 
-    async def get_presigned_url(self, object_name: str) -> str | None:
-        """Generate a presigned URL to share an object."""
+    async def get_presigned_url(self, object_name_or_url: str) -> str | None:
+        """
+        Generate a presigned URL for an object.
+        Handles both an object name and a full URL.
+        """
         try:
-            # Handle cases where the object_name might be a full URL from old data
-            try:
-                parsed_url = urlparse(object_name)
-                if parsed_url.scheme and parsed_url.netloc:
-                    actual_object_name = os.path.basename(parsed_url.path)
-                else:
-                    actual_object_name = object_name
-            except Exception:
-                actual_object_name = object_name
+            # If a full URL is passed, extract just the object name.
+            parsed_url = urlparse(object_name_or_url)
+            if parsed_url.scheme and parsed_url.netloc:
+                # Looks like a URL, extract the path part.
+                # The path might be /bucket_name/object_name, so we get the last part.
+                object_name = parsed_url.path.split('/')[-1]
+            else:
+                # Assumed to be just the object name
+                object_name = object_name_or_url
 
             presigned_url = self.public_client.presigned_get_object(
                 self.bucket_name,
-                actual_object_name,
+                object_name,
                 expires=timedelta(days=7),
             )
             return presigned_url
 
         except S3Error as exc:
-            logger.error(f"Error generating presigned URL: {exc}")
-            return None
+            logger.error(f"Error generating presigned URL for {object_name_or_url}: {exc}")
+            raise
 
     async def upload_file(self, file: UploadFile) -> str:
         """Upload a file to an S3 object."""

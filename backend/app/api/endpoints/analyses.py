@@ -68,6 +68,7 @@ async def process_analysis(
 
     text = pipeline.print_results(results)
     llm_answer = await llm_response(text)
+    logger.info(f"LLM answer: {llm_answer}")
     parsed_text = await pipeline.parse_llm_response(llm_answer)
 
     rec_text = parsed_text["analysis_text"]

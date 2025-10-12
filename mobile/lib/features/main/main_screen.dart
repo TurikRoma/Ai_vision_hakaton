@@ -27,7 +27,6 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   AppScreen _currentScreen = AppScreen.home;
   String? _imagePath;
-  final ScanHistoryService _scanHistoryService = ScanHistoryService();
 
   void _navigateTo(AppScreen screen, {String? imagePath}) {
     setState(() {
