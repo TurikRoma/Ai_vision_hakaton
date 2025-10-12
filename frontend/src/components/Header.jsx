@@ -1,6 +1,6 @@
 // Minimal header: left logo, right profile menu
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import AuthModal from "./AuthModal";
 import logoUrl from "../assets/logo.svg?url";
@@ -13,6 +13,17 @@ export default function Header() {
   const btnRef = useRef(null);
   const menuRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleAuthError = () => {
+      setModalOpen(true);
+    };
+    window.addEventListener("auth-error", handleAuthError);
+    return () => {
+      window.removeEventListener("auth-error", handleAuthError);
+    };
+  }, []);
 
   useEffect(() => {
     function onDocClick(e) {
@@ -56,11 +67,18 @@ export default function Header() {
                     aria-expanded={menuOpen}
                     title="Профиль"
                   >
-                    <img
-                      src="/icon.svg"
-                      alt="profile"
-                      className="h-11 w-11 rounded-full"
-                    />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="h-7 w-7 text-slate-500"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
                   </button>
                   {menuOpen && (
                     <div

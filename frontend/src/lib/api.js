@@ -1,3 +1,4 @@
+import { navigation } from "./navigation";
 // API client with graceful fallback to mocks
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -60,7 +61,7 @@ class ApiClient {
     try {
       let response = await fetch(url, config);
 
-      if (response.status === 401 && !options.isRefresh && !options.skipAuth) {
+      if (response.status === 401 && !options.isRefresh) {
         const refreshed = await this._refreshToken();
         if (refreshed) {
           // Повторяем запрос с новым токеном
@@ -68,9 +69,17 @@ class ApiClient {
           response = await fetch(url, config);
         } else {
           TokenManager.clearTokens();
-          // Можно добавить редирект на страницу логина
-          window.location.href = "/login";
-          throw new Error("Session expired");
+          // Сначала диспатчим событие, чтобы UI мог отреагировать...
+          window.dispatchEvent(new CustomEvent("auth-error"));
+          // ...а затем делаем редирект.
+          if (navigation.navigate) {
+            navigation.navigate("/");
+          } else {
+            window.location.href = "/";
+          }
+          // Возвращаем промис, который никогда не разрешится,
+          // чтобы остановить дальнейшую обработку и избежать ошибок в консоли.
+          return new Promise(() => {});
         }
       }
 
