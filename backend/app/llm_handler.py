@@ -96,8 +96,9 @@ async def llm_response(analysis_results: str) -> str:
 
     **Помни**: Ты не ставишь диагнозы, а даешь экспертные рекомендации на основе данных. Будь эмпатичен, но объективен. Раскрой свой ответ, не сдерживайся в словах и относись к человеку, как к дорогому пациенту.
 
-    Вот так нужно выдать диаграмму состояний в конце твоего ответа: 
-    {{"tireness": <расчетный_процент>, "eyes_health": <процент>, "swelling": <процент>, "eyes_darkcircles": <процент>, "skin_health": <процент>, "acne": <процент>, "stress": <tireness * 0.4 + eyes_darkcircles * 0.25 + swelling * 0.2>, "balance": <100 - (tireness * 0.35 + acne * 0.1 + swelling * 0.2 + eyes_darkcircles * 0.15 + stress * 0.35>}}
+    Вот так нужно выдать диаграмму состояний в конце твоего ответа:
+    Посчитай все итоговые значения для состояний. Для eyes_darkcircles бери то значение, которое получилось наибольшим.
+    {{"tireness": <расчетный_процент>, "eyes_health": <процент>, "swelling": <процент>, "eyes_darkcircles": <light_darkcircles>, "skin_health": <процент>, "acne": <процент>, "stress": <tireness * 0.4 + eyes_darkcircles * 0.25 + swelling * 0.2>, "balance": <100 - (tireness * 0.35 + acne * 0.1 + swelling * 0.2 + eyes_darkcircles * 0.15 + stress * 0.35>}}
     '''
 
     chat_completion = await CLIENT.chat.completions.create(
